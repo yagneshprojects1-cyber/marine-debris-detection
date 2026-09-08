@@ -9,8 +9,7 @@ export default function MapPage({ apiBaseUrl, detectionPoints }) {
   const [selectedDetection, setSelectedDetection] = useState(null);
   const [placeName, setPlaceName] = useState("");
   const [userLocation, setUserLocation] = useState(null);
-  const [routeData, setRouteData] = useState([]);
-  const [loadError, setLoadError] = useState("");
+  const [routeData] = useState([]);
   // Two exclusive views:
   //   - detections present -> show ONLY the objects found in the uploaded image
   //   - otherwise          -> show no generated dataset points
