@@ -18,74 +18,80 @@ def save_uploaded_image(
     preprocessed_path: str,
 ) -> None:
     """Store one upload in the sonar_images collection."""
-    with Image.open(image_path) as image:
-        document = SonarImage(
-            img_unique_id=image_id,
-            uploaded_timestamp=datetime.now(timezone.utc),
-            image_format=image.format,
-            image_name=image_name,
-            image_size=Path(image_path).stat().st_size,
-            image_width=image.width,
-            image_height=image.height,
-            noised_image_path=image_path,
-            preprocessed_image_path=preprocessed_path,
-        )
+    try:
+        with Image.open(image_path) as image:
+            document = SonarImage(
+                img_unique_id=image_id,
+                uploaded_timestamp=datetime.now(timezone.utc),
+                image_format=image.format,
+                image_name=image_name,
+                image_size=Path(image_path).stat().st_size,
+                image_width=image.width,
+                image_height=image.height,
+                noised_image_path=image_path,
+                preprocessed_image_path=preprocessed_path,
+            )
 
-    get_database()["sonar_images"].replace_one(
-        {"img_unique_id": image_id},
-        document.model_dump(mode="json"),
-        upsert=True,
-    )
+        get_database()["sonar_images"].replace_one(
+            {"img_unique_id": image_id},
+            document.model_dump(mode="json"),
+            upsert=True,
+        )
+    except Exception as exc:
+        print(f"[Warning] Failed to save uploaded image to MongoDB: {exc}")
 
 
 def save_detection_results(image_id: str, annotation: dict[str, Any], detections: list[dict[str, Any]]) -> None:
     """Store metadata and predictions when the detect action completes."""
-    database = get_database()
-    sonar = annotation["sonar"]
+    try:
+        database = get_database()
+        sonar = annotation["sonar"]
 
-    # A repeated Detect click represents a new result for the same image.
-    database["ai_predictions"].delete_many({"image_id": image_id})
-    database["metadata"].delete_many({"image_id": image_id})
+        # A repeated Detect click represents a new result for the same image.
+        database["ai_predictions"].delete_many({"image_id": image_id})
+        database["metadata"].delete_many({"image_id": image_id})
 
-    if not detections:
-        metadata = Metadata(
-            meta_id=uuid4().hex,
-            image_id=image_id,
-            range=sonar.get("range"),
-            azimuth=sonar.get("azimuth"),
-            elevation=sonar.get("elevation"),
-            sound_speed=sonar.get("soundspeed"),
-            frequency=sonar.get("frequency"),
-        )
-        database["metadata"].insert_one(metadata.model_dump(mode="json"))
-        return
+        if not detections:
+            metadata = Metadata(
+                meta_id=uuid4().hex,
+                image_id=image_id,
+                range=sonar.get("range"),
+                azimuth=sonar.get("azimuth"),
+                elevation=sonar.get("elevation"),
+                sound_speed=sonar.get("soundspeed"),
+                frequency=sonar.get("frequency"),
+            )
+            database["metadata"].insert_one(metadata.model_dump(mode="json"))
+            return
 
-    for detection in detections:
-        meta_id = uuid4().hex
-        metadata = Metadata(
-            meta_id=meta_id,
-            image_id=image_id,
-            range=sonar.get("range"),
-            azimuth=sonar.get("azimuth"),
-            elevation=sonar.get("elevation"),
-            sound_speed=sonar.get("soundspeed"),
-            frequency=sonar.get("frequency"),
-            **detection["bndbox"],
-        )
-        prediction = AIPrediction(
-            predicted_id=uuid4().hex,
-            image_id=image_id,
-            meta_id=meta_id,
-            object_class=detection.get("name"),
-            confidence_score=detection.get("confidence"),
-            depth=detection.get("depth"),
-            local_x=detection.get("local_x"),
-            local_z=detection.get("local_z"),
-            latitude=detection.get("latitude"),
-            longitude=detection.get("longitude"),
-        )
-        database["metadata"].insert_one(metadata.model_dump(mode="json"))
-        database["ai_predictions"].insert_one(prediction.model_dump(mode="json"))
+        for detection in detections:
+            meta_id = uuid4().hex
+            metadata = Metadata(
+                meta_id=meta_id,
+                image_id=image_id,
+                range=sonar.get("range"),
+                azimuth=sonar.get("azimuth"),
+                elevation=sonar.get("elevation"),
+                sound_speed=sonar.get("soundspeed"),
+                frequency=sonar.get("frequency"),
+                **detection["bndbox"],
+            )
+            prediction = AIPrediction(
+                predicted_id=uuid4().hex,
+                image_id=image_id,
+                meta_id=meta_id,
+                object_class=detection.get("name"),
+                confidence_score=detection.get("confidence"),
+                depth=detection.get("depth"),
+                local_x=detection.get("local_x"),
+                local_z=detection.get("local_z"),
+                latitude=detection.get("latitude"),
+                longitude=detection.get("longitude"),
+            )
+            database["metadata"].insert_one(metadata.model_dump(mode="json"))
+            database["ai_predictions"].insert_one(prediction.model_dump(mode="json"))
+    except Exception as exc:
+        print(f"[Warning] Failed to save detection results to MongoDB: {exc}")
 
 
 def list_history() -> list[dict[str, Any]]:

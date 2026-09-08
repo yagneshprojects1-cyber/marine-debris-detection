@@ -13,4 +13,5 @@ def get_map_data():
     try:
         return repository.list_map_detections()
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Map database is unavailable: {exc}") from exc
+        print(f"[Warning] Map database unavailable ({exc}). Returning empty map data.")
+        return {"image": None, "detections": [], "object_count": 0}

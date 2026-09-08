@@ -13,4 +13,5 @@ def get_history():
     try:
         return repository.list_history()
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"History database is unavailable: {exc}") from exc
+        print(f"[Warning] History database unavailable ({exc}). Returning empty list.")
+        return []

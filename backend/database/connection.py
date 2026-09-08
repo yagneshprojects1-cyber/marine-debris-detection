@@ -35,12 +35,10 @@ def get_client() -> MongoClient:
         "serverSelectionTimeoutMS": int(os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MS", "5000")),
     }
 
-    if ca_file:
-        kwargs["tlsCAFile"] = ca_file
-
-    # Bypass SSL handshake verification errors in development/hackathon environments
     if os.getenv("MONGODB_ALLOW_INVALID_CERTS", "true").lower() == "true":
         kwargs["tlsAllowInvalidCertificates"] = True
+    elif ca_file:
+        kwargs["tlsCAFile"] = ca_file
 
     return MongoClient(uri, **kwargs)
 
