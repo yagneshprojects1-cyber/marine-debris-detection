@@ -49,7 +49,7 @@ async def preprocess_image(
             preprocessed_path=str(preprocessed_path),
         )
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Image database is unavailable: {exc}") from exc
+        print(f"[Warning] Image database unavailable ({exc}). Proceeding without database persistence.")
     print(f"[Preprocess] Received '{original_name}' ({len(content)} bytes) -> {saved_path}")
 
     return PreprocessResponse(

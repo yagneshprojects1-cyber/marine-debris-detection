@@ -287,7 +287,7 @@ async def detect_objects(image_id: str):
             detections=detection_documents,
         )
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Detection database is unavailable: {exc}") from exc
+        print(f"[Warning] Detection database unavailable ({exc}). Proceeding without database persistence.")
 
     message = (
         f"{len(detected_objects)} object(s) detected."
