@@ -33,10 +33,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# ── CORS: allow the React dev server to call the API ──────────────────────────
+# ── CORS: allow the React dev server / Vercel frontend to call the API ───────
+cors_origins = [origin.strip() for origin in config.FRONTEND_URL.split(",") if origin.strip()] if config.FRONTEND_URL and config.FRONTEND_URL != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

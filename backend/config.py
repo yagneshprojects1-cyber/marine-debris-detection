@@ -5,16 +5,22 @@ Every path and tunable value used by the application lives here so that
 routers and services never hard-code locations or magic numbers.
 """
 
+import os
 import random
 from pathlib import Path
 
-# ── Application ───────────────────────────────────────────────────────────────
-APP_NAME = "Debris Detector API"
-API_HOST = "127.0.0.1"
-API_PORT = 8000
+from dotenv import load_dotenv
 
 # ── Directories ───────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent          # .../backend
+load_dotenv(BASE_DIR / ".env")
+
+# ── Application ───────────────────────────────────────────────────────────────
+APP_NAME = os.getenv("APP_NAME", "Debris Detector API")
+API_HOST = os.getenv("HOST", os.getenv("API_HOST", "0.0.0.0"))
+API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", "8000")))
+FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
+
 DATA_DIR = BASE_DIR / "data"
 UPLOAD_DIR = DATA_DIR / "uploads"                   # original uploaded images
 RESULT_DIR = DATA_DIR / "results"                   # YOLO annotated images

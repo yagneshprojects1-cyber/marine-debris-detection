@@ -3,7 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 
-const PORT = Number(process.env.BACKEND_PORT || 5000);
+const PORT = Number(process.env.PORT || process.env.BACKEND_PORT || 5000);
+const ALLOWED_ORIGIN = process.env.FRONTEND_URL || process.env.ALLOWED_ORIGINS || "*";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PYTHON_FILE = path.join(__dirname, "position.py");
 const CSV_FILE = path.join(__dirname, "geotag.csv");
@@ -14,7 +15,7 @@ function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json",
     "Content-Length": Buffer.byteLength(body),
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   });
