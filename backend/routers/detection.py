@@ -13,6 +13,8 @@ YOLO Detection
 Annotated Image + XML/Geotag Results
 """
 
+import sys
+import traceback
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -43,12 +45,7 @@ async def detect_objects(image_id: str):
 
     """Run adaptive filtering followed by YOLO."""
 
-    # --------------------------------------------------
-    # Get uploaded image session
-    # --------------------------------------------------
-
     session = session_store.get_session(image_id)
-
     if session is None:
         raise HTTPException(
             status_code=404,
@@ -59,17 +56,11 @@ async def detect_objects(image_id: str):
         )
 
     image_path = Path(session["upload_path"])
-
     if not image_path.exists():
         raise HTTPException(
             status_code=410,
             detail="Stored image is missing on disk."
         )
-
-
-    # --------------------------------------------------
-    # Check YOLO model
-    # --------------------------------------------------
 
     if not config.MODEL_WEIGHTS_PATH.exists():
         raise HTTPException(
@@ -81,10 +72,16 @@ async def detect_objects(image_id: str):
             ),
         )
 
-
-    # --------------------------------------------------
-    # ADAPTIVE FILTERING
-    # --------------------------------------------------
+    if not yolo_service.is_model_ready():
+        err = yolo_service.get_model_error()
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "YOLO model is not loaded yet. "
+                f"Reason: {err or 'still initializing'}. "
+                "Please wait 10-30 seconds and try again, or check server logs."
+            ),
+        )
 
     print(
         f"[Detection] Starting adaptive preprocessing "
@@ -92,20 +89,14 @@ async def detect_objects(image_id: str):
     )
 
     try:
-
-        # Read uploaded image
         image = cv2.imread(
             str(image_path),
             cv2.IMREAD_GRAYSCALE
         )
 
         if image is None:
-            raise RuntimeError(
-                "Failed to read uploaded image."
-            )
+            raise RuntimeError("Failed to read uploaded image.")
 
-
-        # Run noise detection + adaptive filtering
         (
             filtered_image,
             noise_type,
@@ -113,131 +104,58 @@ async def detect_objects(image_id: str):
             filter_confidence
         ) = adaptive_filter(image)
 
+        print(f"[Adaptive Filter] Noise detected: {noise_type}")
+        print(f"[Adaptive Filter] Filter applied: {filter_name}")
+        print(f"[Adaptive Filter] Confidence: {filter_confidence * 100:.2f}%")
 
-        print(
-            f"[Adaptive Filter] Noise detected: "
-            f"{noise_type}"
-        )
+        filtered_dir = config.RESULT_DIR / image_id
+        filtered_dir.mkdir(parents=True, exist_ok=True)
+        filtered_path = filtered_dir / "filtered.jpg"
 
-        print(
-            f"[Adaptive Filter] Filter applied: "
-            f"{filter_name}"
-        )
-
-        print(
-            f"[Adaptive Filter] Confidence: "
-            f"{filter_confidence * 100:.2f}%"
-        )
-
-
-        # --------------------------------------------------
-        # Save filtered image
-        # --------------------------------------------------
-
-        filtered_dir = (
-            config.RESULT_DIR /
-            image_id
-        )
-
-        filtered_dir.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        filtered_path = (
-            filtered_dir /
-            "filtered.jpg"
-        )
-
-
-        success = cv2.imwrite(
-            str(filtered_path),
-            filtered_image
-        )
-
+        success = cv2.imwrite(str(filtered_path), filtered_image)
         if not success:
-            raise RuntimeError(
-                "Failed to save filtered image."
-            )
+            raise RuntimeError("Failed to save filtered image.")
 
-
-        print(
-            f"[Adaptive Filter] Filtered image saved -> "
-            f"{filtered_path}"
-        )
-
+        print(f"[Adaptive Filter] Filtered image saved -> {filtered_path}")
 
     except Exception as e:
-
-        print(
-            f"[Adaptive Filter] Error: {e}"
-        )
-
+        print(f"[Adaptive Filter] Error: {e}")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=500,
-            detail=(
-                f"Adaptive preprocessing failed: {str(e)}"
-            ),
+            detail=f"Adaptive preprocessing failed: {type(e).__name__}: {str(e)}",
         )
 
-
-    # --------------------------------------------------
-    # YOLO DETECTION
-    # --------------------------------------------------
-
-    print(
-        f"[Detection] Running YOLO on filtered image..."
-    )
+    print(f"[Detection] Running YOLO on filtered image: {filtered_path} ...")
 
     try:
-
-        results = yolo_service.run_detection(
-            filtered_path
-        )
-
+        results = yolo_service.run_detection(filtered_path)
+        print(f"[Detection] YOLO returned {len(results)} result(s)")
     except Exception as e:
-
-        print(
-            f"[Detection] Error during YOLO inference: {e}"
-        )
-
+        print(f"[Detection] Error during YOLO inference: {type(e).__name__}: {e}")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=500,
-            detail=(
-                f"YOLO detection failed: {str(e)}"
-            ),
+            detail=f"YOLO detection failed: {type(e).__name__}: {str(e)}",
         )
 
+    try:
+        primary_result = results[0]
+    except (IndexError, TypeError) as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"YOLO returned no valid results: {type(e).__name__}: {str(e)}",
+        )
 
-    # --------------------------------------------------
-    # Primary YOLO result
-    # --------------------------------------------------
-
-    primary_result = results[0]
-
-
-    # --------------------------------------------------
-    # Save annotated image
-    # --------------------------------------------------
-
-    annotated_path = (
-        yolo_service.save_annotated_image(
+    try:
+        annotated_path = yolo_service.save_annotated_image(
             primary_result,
-            config.RESULT_DIR /
-            image_id /
-            "annotated.jpg",
+            config.RESULT_DIR / image_id / "annotated.jpg",
         )
-    )
-
-    print(
-        f"[Detection] Annotated image saved -> "
-        f"{annotated_path}"
-    )
-
-
-    # --------------------------------------------------
-    # Determine ship position (geotag CSV or random Indian Ocean ship location)
-    # --------------------------------------------------
+        print(f"[Detection] Annotated image saved -> {annotated_path}")
+    except Exception as e:
+        print(f"[Detection] Error saving annotated image: {e}")
+        annotated_path = None
 
     ship_loc = session.get("ship_location")
     if not ship_loc:
@@ -252,32 +170,25 @@ async def detect_objects(image_id: str):
             ship_loc = config.random_ship_location()
         session["ship_location"] = ship_loc
 
-
-    # --------------------------------------------------
-    # Build detection response
-    # --------------------------------------------------
-
-    detected_objects = (
-        detection_service.extract_detections(
+    try:
+        detected_objects = detection_service.extract_detections(
             primary_result,
             session["annotation"],
             ship_location=ship_loc,
         )
-    )
-
+    except Exception as e:
+        print(f"[Detection] Error extracting detections: {e}")
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to extract detection results: {type(e).__name__}: {str(e)}",
+        )
 
     session_store.save_detections(
         image_id,
-        [
-            obj.model_dump()
-            for obj in detected_objects
-        ]
+        [obj.model_dump() for obj in detected_objects]
     )
 
-
-    # --------------------------------------------------
-    # Response message
-    # --------------------------------------------------
     detection_documents = [obj.model_dump() for obj in detected_objects]
     session_store.save_detections(image_id, detection_documents)
     try:
@@ -292,38 +203,24 @@ async def detect_objects(image_id: str):
     message = (
         f"{len(detected_objects)} object(s) detected."
         if detected_objects
-        else
-        "No objects detected above the confidence threshold."
+        else "No objects detected above the confidence threshold."
     )
 
+    print(f"[Detection] {message}")
 
-    print(
-        f"[Detection] {message}"
+    annotated_url = (
+        f"/media/results/{image_id}/annotated.jpg"
+        if annotated_path
+        else None
     )
-
-
-    # --------------------------------------------------
-    # Return response
-    # --------------------------------------------------
 
     return DetectionResponse(
-
         status="success",
-
         message=message,
-
         image_id=image_id,
-
         objects_detected=detected_objects,
-
         ship_latitude=ship_loc["latitude"],
-
         ship_longitude=ship_loc["longitude"],
-
         ship_water_body=ship_loc.get("name", "Indian Ocean"),
-
-        annotated_image_url=(
-            f"/media/results/"
-            f"{image_id}/annotated.jpg"
-        ),
+        annotated_image_url=annotated_url,
     )

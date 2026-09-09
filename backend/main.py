@@ -14,18 +14,52 @@ Run from the ``backend`` folder:
 """
 
 import sys
+import time
+import traceback
 from pathlib import Path
 
-# Allow "import config" etc. no matter which folder the server is started from.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 import config
 from routers import detection, history, map_data, positions, preprocessing, reports, route_planning, stats
+from services import yolo_service
+
+
+class CORSEnsureMiddleware(BaseHTTPMiddleware):
+    """Ensure CORS headers are present on EVERY response, including 500 errors."""
+
+    async def dispatch(self, request: Request, call_next):
+        start = time.time()
+        origin = request.headers.get("origin", "*")
+
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            print(f"[Server] Unhandled exception: {type(exc).__name__}: {exc}")
+            print(traceback.format_exc())
+            response = JSONResponse(
+                status_code=500,
+                content={"detail": f"Internal server error: {type(exc).__name__}: {str(exc)}"},
+            )
+
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Max-Age"] = "3600"
+
+        elapsed = (time.time() - start) * 1000
+        print(f"[Server] {request.method} {request.url.path} -> {response.status_code} ({elapsed:.1f}ms)")
+        return response
+
 
 app = FastAPI(
     title=config.APP_NAME,
@@ -40,7 +74,11 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Length", "Content-Disposition"],
+    max_age=3600,
 )
+
+app.add_middleware(CORSEnsureMiddleware)
 
 # ── Serve uploaded & annotated images as static files ─────────────────────────
 config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -59,10 +97,36 @@ app.include_router(history.router)
 app.include_router(map_data.router)
 
 
+@app.on_event("startup")
+async def on_startup():
+    """Preload YOLO model when the server boots so it's ready for first request."""
+    print("=" * 60)
+    print(f"[Startup] {config.APP_NAME} is booting...")
+    print(f"[Startup] Data directory: {config.DATA_DIR}")
+    print(f"[Startup] Model weights: {config.MODEL_WEIGHTS_PATH} -> exists={config.MODEL_WEIGHTS_PATH.exists()}")
+    print("=" * 60)
+
+    model_ok = yolo_service.preload_model()
+    if not model_ok:
+        print("[Startup] WARNING: YOLO model failed to load. Detection API will return errors.")
+        print(f"[Startup] Model error: {yolo_service.get_model_error()}")
+    else:
+        print("[Startup] YOLO model loaded and ready")
+
+    print("=" * 60)
+    print("[Startup] Server ready")
+    print("=" * 60)
+
+
 @app.get("/", tags=["Health"])
 def health_check():
-    """Simple liveness probe."""
-    return {"status": "ok", "app": config.APP_NAME}
+    """Simple liveness probe that also reports YOLO readiness."""
+    return {
+        "status": "ok",
+        "app": config.APP_NAME,
+        "yolo_ready": yolo_service.is_model_ready(),
+        "model_exists": config.MODEL_WEIGHTS_PATH.exists(),
+    }
 
 
 if __name__ == "__main__":
