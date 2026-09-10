@@ -22,7 +22,7 @@ import session_store
 
 from database import repository
 from schemas import DetectionResponse
-from services import detection_service, geotag_service, yolo_service
+from services import detection_service, yolo_service
 
 from adaptive_filter import adaptive_filter
 
@@ -236,21 +236,11 @@ async def detect_objects(image_id: str):
 
 
     # --------------------------------------------------
-    # Determine ship position (geotag CSV or random Indian Ocean ship location)
+    # Determine ship position from the configured random demo coordinates.
     # --------------------------------------------------
 
-    ship_loc = session.get("ship_location")
-    if not ship_loc:
-        geotag_row = geotag_service.lookup(session["original_filename"])
-        if geotag_row:
-            ship_loc = {
-                "latitude": float(geotag_row["vehicle_lat"]),
-                "longitude": float(geotag_row["vehicle_lon"]),
-                "name": geotag_row.get("split", "Geotag Dataset"),
-            }
-        else:
-            ship_loc = config.random_ship_location()
-        session["ship_location"] = ship_loc
+    ship_loc = session.get("ship_location") or config.random_ship_location()
+    session["ship_location"] = ship_loc
 
 
     # --------------------------------------------------
