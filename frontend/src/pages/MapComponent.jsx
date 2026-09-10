@@ -45,6 +45,18 @@ const createDotIcon = (color = "#e11d48", size = 10, label = "") =>
     iconAnchor: label ? [12, 12] : [(size + 4) / 2, (size + 4) / 2],
   });
 
+export const getMarkerLabel = ({ point, index, isStart, markerCount, routeDataLength }) => {
+  if (point?.step_number != null && Number.isFinite(Number(point.step_number))) {
+    return String(point.step_number);
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(point || {}, 'step_number') && routeDataLength > 0) {
+    return String(markerCount ?? routeDataLength);
+  }
+
+  return String(index + 1);
+};
+
 const mapViews = {
   satellite: {
     label: "Satellite",
@@ -180,7 +192,14 @@ const MapComponent = ({
         const isEnd = index === routeData.length - 1;
         const markerColor = isStart ? "#16a34a" : isEnd ? "#2563eb" : "#dc2626";
         const markerSize = isStart ? 14 : 10;
-        const stepLabel = point.step_number ? String(point.step_number) : String(index + 1);
+        const markerCount = routeData.length;
+        const stepLabel = getMarkerLabel({
+          point,
+          index,
+          isStart,
+          markerCount,
+          routeDataLength: routeData.length,
+        });
         const marker = L.marker([point.lat, point.lng], {
           icon: createDotIcon(markerColor, markerSize, stepLabel),
         });
