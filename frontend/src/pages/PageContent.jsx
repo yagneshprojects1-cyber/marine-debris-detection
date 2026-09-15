@@ -1,4 +1,4 @@
-import Dashboard from "./dashboard";
+import SonarAnalystDashboard from "./SonarAnalystDashboard";
 import MapPage from "./MapPage";
 import ThreeDMapPage from "./ThreeDMapPage";
 import AnnotatedImagePage from "./AnnotatedImagePage";
@@ -23,7 +23,7 @@ export default function PageContent({
           height: "100%",
         }}
       >
-        <Dashboard
+        <SonarAnalystDashboard
           aiApiBaseUrl={aiApiBaseUrl}
           onDetectionComplete={onDetectionComplete}
           onNavigate={onNavigate}

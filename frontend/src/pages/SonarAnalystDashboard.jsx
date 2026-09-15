@@ -1,6 +1,7 @@
 import UploadPage from "./UploadPage";
+import "./SonarAnalystDashboard.css";
 
-export default function Dashboard({
+export default function SonarAnalystDashboard({
   aiApiBaseUrl,
   onDetectionComplete,
   onNavigate,
