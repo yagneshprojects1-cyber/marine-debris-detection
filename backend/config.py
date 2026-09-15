@@ -18,13 +18,20 @@ BASE_DIR = Path(__file__).resolve().parent          # .../backend
 DATA_DIR = BASE_DIR / "data"
 UPLOAD_DIR = DATA_DIR / "uploads"                   # original uploaded images
 RESULT_DIR = DATA_DIR / "results"                   # YOLO annotated images
+ASSETS_DIR = BASE_DIR / "assets"
+MODELS_DIR = ASSETS_DIR / "models"
+DATASETS_DIR = ASSETS_DIR / "datasets"
+CLASSIFIERS_DIR = ASSETS_DIR / "classifiers"
+THREE_D_MODELS_DIR = ASSETS_DIR / "3dmodels"
 
 # ── Model & dataset files ─────────────────────────────────────────────────────
-MODEL_WEIGHTS_PATH = BASE_DIR / "bestv2.pt"
-GEOTAG_CSV_PATH = BASE_DIR / "geotag.csv"
+MODEL_WEIGHTS_PATH = MODELS_DIR / "bestv2.pt"
+DATASET_CONFIG_PATH = DATASETS_DIR / "data.yaml"
+GEOTAG_CSV_PATH = DATASETS_DIR / "geotag.csv"
+NOISE_CLASSIFIER_PATH = CLASSIFIERS_DIR / "noise_classifier.pkl"
 
 # ── Position calculation (Vincenty direct formula script) ─────────────────────
-POSITION_SCRIPT_PATH = BASE_DIR / "position.py"
+POSITION_SCRIPT_PATH = BASE_DIR / "services" / "position_calculator.py"
 CALCULATED_POSITIONS_PATH = BASE_DIR / "geotag_calculated.json"
 
 # ── Detection settings ────────────────────────────────────────────────────────

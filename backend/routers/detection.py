@@ -24,7 +24,7 @@ from database import repository
 from schemas import DetectionResponse
 from services import detection_service, yolo_service
 
-from adaptive_filter import adaptive_filter
+from services.adaptive_filter import adaptive_filter
 
 import cv2
 
@@ -77,7 +77,7 @@ async def detect_objects(image_id: str):
             detail=(
                 f"YOLO model file not found at "
                 f"{config.MODEL_WEIGHTS_PATH}. "
-                "Please ensure bestv2.pt is in the backend directory."
+                "Please ensure the YOLO model is available in backend/assets/models."
             ),
         )
 

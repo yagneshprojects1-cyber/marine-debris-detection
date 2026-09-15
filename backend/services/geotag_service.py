@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import config
-from position import vincenty_direct
+from services.position_calculator import vincenty_direct
 
 _geotag_cache: Dict[str, Dict[str, Any]] = {}
 

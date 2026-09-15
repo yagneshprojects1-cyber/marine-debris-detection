@@ -26,6 +26,7 @@ from fastapi.staticfiles import StaticFiles
 
 import config
 from routers import detection, history, map_data, positions, preprocessing, reports, route_planning, stats
+from roles import router as roles_router
 
 app = FastAPI(
     title=config.APP_NAME,
@@ -45,7 +46,7 @@ app.add_middleware(
 config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 config.RESULT_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=str(config.DATA_DIR)), name="media")
-app.mount("/3dmodels", StaticFiles(directory=str(config.BASE_DIR / "3dmodels")), name="3dmodels")
+app.mount("/3dmodels", StaticFiles(directory=str(config.THREE_D_MODELS_DIR)), name="3dmodels")
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(preprocessing.router)
@@ -56,6 +57,7 @@ app.include_router(positions.router)
 app.include_router(route_planning.router)
 app.include_router(history.router)
 app.include_router(map_data.router)
+app.include_router(roles_router.router)
 
 
 @app.get("/", tags=["Health"])

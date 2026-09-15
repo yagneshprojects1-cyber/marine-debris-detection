@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api", tags=["4 - Stats"])
 def _count_model_classes() -> int:
     """Count class entries in data.yaml without loading the heavy model."""
     try:
-        content = config.MODEL_WEIGHTS_PATH.with_name("data.yaml").read_text(encoding="utf-8")
+        content = config.DATASET_CONFIG_PATH.read_text(encoding="utf-8")
         return len(re.findall(r"^\s*\d+\s*:", content, flags=re.MULTILINE))
     except OSError:
         return 0

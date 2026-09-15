@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from schemas import BoundingBox, DetectedObject
 import config
-from position import vincenty_direct
+from services.position_calculator import vincenty_direct
 
 
 def extract_detections(result, annotation: dict, ship_location: Optional[dict] = None) -> List[DetectedObject]:

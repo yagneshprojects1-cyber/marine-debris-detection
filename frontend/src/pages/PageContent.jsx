@@ -1,4 +1,4 @@
-import SonarAnalystDashboard from "./SonarAnalystDashboard";
+import SonarAnalystDashboard from "../roles/sonar-analyst/SonarAnalystDashboard";
 import MapPage from "./MapPage";
 import ThreeDMapPage from "./ThreeDMapPage";
 import AnnotatedImagePage from "./AnnotatedImagePage";

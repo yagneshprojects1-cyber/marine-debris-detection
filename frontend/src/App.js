@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import './App.css';
 import Navbar from './pages/navbar';
 import PageContent from './pages/PageContent';
-import RoleSelectionPage from './pages/RoleSelectionPage';
-import RoleLandingPage from './pages/RoleLandingPage';
+import RoleSelectionPage from './roles/RoleSelectionPage';
+import RoleLandingPage from './roles/RoleLandingPage';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
 
 function App() {
