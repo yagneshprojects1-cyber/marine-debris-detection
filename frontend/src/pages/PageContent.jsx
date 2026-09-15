@@ -13,6 +13,7 @@ export default function PageContent({
   detectionResult,
   onDetectionComplete,
   onNavigate,
+  onGenerateReport,
 }) {
   return (
     <>
@@ -30,7 +31,12 @@ export default function PageContent({
       </div>
 
       {activeTab === "maps" && (
-        <MapPage apiBaseUrl={apiBaseUrl} detectionPoints={detections} />
+        <MapPage
+          apiBaseUrl={apiBaseUrl}
+          detectionPoints={detections}
+          detectionResult={detectionResult}
+          onGenerateReport={onGenerateReport}
+        />
       )}
       {activeTab === "3d-map" && (
         <ThreeDMapPage
@@ -38,6 +44,7 @@ export default function PageContent({
           shipLatitude={detectionResult?.ship_latitude}
           shipLongitude={detectionResult?.ship_longitude}
           onNavigate={onNavigate}
+          onGenerateReport={onGenerateReport}
         />
       )}
       {activeTab === "annotated-image" && (

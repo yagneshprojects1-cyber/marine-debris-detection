@@ -13,7 +13,14 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.database import Database
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+_ENV_CANDIDATES = [
+    Path(__file__).resolve().parents[1] / ".env",
+    Path(__file__).resolve().parents[1] / "env",
+]
+
+for env_path in _ENV_CANDIDATES:
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
 
 
 try:
@@ -32,15 +39,23 @@ def get_client() -> MongoClient:
 
     kwargs = {
         "appname": os.getenv("MONGODB_APP_NAME", "debris-detector"),
-        "serverSelectionTimeoutMS": int(os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MS", "5000")),
+        "serverSelectionTimeoutMS": int(os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MS", "20000")),
+        "connectTimeoutMS": int(os.getenv("MONGODB_CONNECT_TIMEOUT_MS", "20000")),
+        "socketTimeoutMS": int(os.getenv("MONGODB_SOCKET_TIMEOUT_MS", "20000")),
     }
+
+    if os.getenv("MONGODB_TLS", "true").lower() == "true":
+        kwargs["tls"] = True
 
     if ca_file:
         kwargs["tlsCAFile"] = ca_file
 
-    # Bypass SSL handshake verification errors in development/hackathon environments
+    # Bypass SSL handshake verification errors in development/hackathon environments.
     if os.getenv("MONGODB_ALLOW_INVALID_CERTS", "true").lower() == "true":
         kwargs["tlsAllowInvalidCertificates"] = True
+
+    if uri.startswith("mongodb+srv://"):
+        kwargs.setdefault("tls", True)
 
     return MongoClient(uri, **kwargs)
 

@@ -3,7 +3,6 @@ import './App.css';
 import Navbar from './pages/navbar';
 import PageContent from './pages/PageContent';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
-import { downloadReport } from './utils/downloadReport';
 
 function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -46,8 +45,31 @@ function App() {
     return () => window.clearTimeout(timeoutId);
   }, [showAnalysisToast]);
 
-  const handleGenerateReport = () => {
-    downloadReport(AI_API_BASE_URL, detectionResult?.image_id);
+  const handleGenerateReport = (selectedObject = null) => {
+    if (!detectionResult) return;
+
+    const payload = selectedObject
+      ? {
+          image_id: detectionResult.image_id || "selected-object",
+          object: {
+            ...selectedObject,
+            source: selectedObject.source || "selected-object",
+          },
+          generated_at: new Date().toISOString(),
+        }
+      : detectionResult;
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const fileName = selectedObject
+      ? `${(selectedObject.name || "selected-object").replace(/\s+/g, "-").toLowerCase()}.json`
+      : `${detectionResult.image_id || "detection-report"}.json`;
+
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -55,8 +77,6 @@ function App() {
       <Navbar
         activeTab={activeTab}
         onNavigate={setActiveTab}
-        hasDetections={detections.length > 0}
-        onGenerateReport={handleGenerateReport}
       />
       {/* Scrollable page area: every tab can grow and scroll here */}
       <div style={{ flex: 1, overflowY: "auto" }}>
@@ -68,6 +88,7 @@ function App() {
           detectionResult={detectionResult}
           onDetectionComplete={handleDetectionComplete}
           onNavigate={setActiveTab}
+          onGenerateReport={handleGenerateReport}
         />
       </div>
       {showAnalysisToast && (

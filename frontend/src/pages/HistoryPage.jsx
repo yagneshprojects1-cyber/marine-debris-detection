@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import DetectionResults from "../components/upload/DetectionResults";
+import MapPage from "./MapPage";
+import ThreeDMapPage from "./ThreeDMapPage";
 import "./HistoryPage.css";
 
 const formatDate = (value) => {
@@ -23,6 +26,8 @@ const formatBoundingBox = (box = {}) => {
 export default function HistoryPage({ apiBaseUrl }) {
   const [historyItems, setHistoryItems] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
+  const [historyDetailView, setHistoryDetailView] = useState("results");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshToken, setRefreshToken] = useState(0);
@@ -57,6 +62,42 @@ export default function HistoryPage({ apiBaseUrl }) {
     ? ((confidences.reduce((total, confidence) => total + confidence, 0) / confidences.length) * 100).toFixed(1)
     : "0.0";
   const highestConfidence = confidences.length ? (Math.max(...confidences) * 100).toFixed(1) : "0.0";
+
+  const handleGetDetails = (item) => {
+    setSelectedHistoryItem(item);
+    setHistoryDetailView("results");
+    window.requestAnimationFrame(() => {
+      document.querySelector(".history-detail-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const selectedDetail = selectedHistoryItem
+    ? {
+        image_id: selectedHistoryItem.image_id,
+        ship_latitude: Number(selectedHistoryItem.latitude) || 0,
+        ship_longitude: Number(selectedHistoryItem.longitude) || 0,
+        objects_detected: [{
+          name: selectedHistoryItem.object,
+          confidence: Number(selectedHistoryItem.confidence) || 0,
+          latitude: Number(selectedHistoryItem.latitude) || 0,
+          longitude: Number(selectedHistoryItem.longitude) || 0,
+          depth: 0,
+          local_x: 0,
+          local_z: 0,
+          sonar_range: 0,
+          sonar_azimuth: 0,
+          sonar_elevation: 0,
+          sonar_soundspeed: 1500,
+          sonar_frequency: 0,
+          bndbox: {
+            xmin: 0,
+            ymin: 0,
+            xmax: 0,
+            ymax: 0,
+          },
+        }],
+      }
+    : null;
 
   return (
     <main className="history-page">
@@ -142,12 +183,83 @@ export default function HistoryPage({ apiBaseUrl }) {
                   <td className="history-mono">{formatTime(item.timestamp)}</td>
                   <td className="history-mono">{formatBoundingBox(item.bounding_box)}</td>
                   <td className="history-mono history-id">{item.image_id || "-"}</td>
-                  <td>{item.image_name || "-"}</td>
+                  <td>
+                    <div className="history-row-actions">
+                      <span>{item.image_name || "-"}</span>
+                      <button
+                        type="button"
+                        className="history-detail-button"
+                        onClick={() => handleGetDetails(item)}
+                      >
+                        Get Details
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {selectedDetail && (
+          <section className="history-detail-panel" aria-label="Selected history item details">
+            <div className="history-detail-header">
+              <div>
+                <span className="history-detail-eyebrow">Selected history record</span>
+                <h2>{selectedHistoryItem.object}</h2>
+              </div>
+              <button
+                type="button"
+                className="history-detail-close"
+                onClick={() => setSelectedHistoryItem(null)}
+              >
+                <span aria-hidden="true">←</span>
+                <span>Back</span>
+              </button>
+            </div>
+
+            <div className="history-detail-tabs" role="tablist" aria-label="History item views">
+              {[
+                { id: "results", label: "Detection Results" },
+                { id: "2d", label: "2D Map" },
+                { id: "3d", label: "3D Map" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={historyDetailView === tab.id}
+                  className={historyDetailView === tab.id ? "active" : ""}
+                  onClick={() => setHistoryDetailView(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="history-detail-content">
+              {historyDetailView === "results" && <DetectionResults detectionResult={selectedDetail} />}
+              {historyDetailView === "2d" && (
+                <div className="history-detail-map">
+                  <MapPage
+                    apiBaseUrl={apiBaseUrl}
+                    detectionPoints={selectedDetail.objects_detected}
+                    detectionResult={selectedDetail}
+                  />
+                </div>
+              )}
+              {historyDetailView === "3d" && (
+                <div className="history-detail-map">
+                  <ThreeDMapPage
+                    detections={selectedDetail.objects_detected}
+                    shipLatitude={selectedDetail.ship_latitude}
+                    shipLongitude={selectedDetail.ship_longitude}
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );

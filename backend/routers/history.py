@@ -12,5 +12,8 @@ def get_history():
     """Return detection history joined with its uploaded image details."""
     try:
         return repository.list_history()
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"History database is unavailable: {exc}") from exc
+    except Exception:
+        # Atlas/network issues can temporarily prevent MongoDB access.
+        # Return an empty result instead of crashing the history page so the UI
+        # can still render an empty state when the database is unreachable.
+        return []

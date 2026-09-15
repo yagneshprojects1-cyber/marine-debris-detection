@@ -25,6 +25,8 @@ export default function SidePanel({
   onToggleOptimalRoute = null, // callback to fetch/clear optimal route
   loadingRoute = false,       // loading spinner indicator
   showEmptyPlaceholders = true, // set to false to hide empty placeholder sections
+  onDownloadReport = null,
+  detectionResult = null,
   children,                   // slot for extra content
   className = "",
   style = {},
@@ -203,6 +205,30 @@ export default function SidePanel({
             </Section>
           )}
 
+          {detection && onDownloadReport && (
+            <Section title="Report" icon="file">
+              <button
+                type="button"
+                onClick={() => onDownloadReport(detection)}
+                style={styles.downloadButton}
+              >
+                Download Selected Object
+              </button>
+            </Section>
+          )}
+
+          {!detection && detectionResult && detections.length > 0 && onDownloadReport && (
+            <Section title="Report" icon="file">
+              <button
+                type="button"
+                onClick={() => onDownloadReport(detections[0])}
+                style={styles.downloadButton}
+              >
+                Download Selected Object
+              </button>
+            </Section>
+          )}
+
           {/* ======= SLOT: extra content from parent ======= */}
           {children}
       </div>
@@ -238,6 +264,12 @@ function Section({ title, icon, children }) {
     route: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4285F4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="3 12 8 12 12 4 16 20 20 12 21 12" />
+      </svg>
+    ),
+    file: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ee787" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6" />
       </svg>
     ),
   };

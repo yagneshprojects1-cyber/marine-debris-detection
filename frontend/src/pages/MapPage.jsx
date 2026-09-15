@@ -4,7 +4,7 @@ import SidePanel from "./SidePanel";
 import "./MapPage.css";
 import { normalizeDetectionPoints, normalizeGeneratedPositions } from "../utils/mapPoints";
 
-export default function MapPage({ apiBaseUrl, detectionPoints }) {
+export default function MapPage({ apiBaseUrl, detectionPoints, detectionResult, onGenerateReport }) {
   const [clickedCoords, setClickedCoords] = useState(null);
   const [selectedDetection, setSelectedDetection] = useState(null);
   const [placeName, setPlaceName] = useState("");
@@ -80,6 +80,7 @@ export default function MapPage({ apiBaseUrl, detectionPoints }) {
           onMapClick={handleMapClick}
           onPointClick={handlePointClick}
           onLocationFound={(loc) => setUserLocation(loc)}
+          suppressDuplicateRouteClosure={!isDetectionView}
         />
       </div>
 
@@ -93,6 +94,8 @@ export default function MapPage({ apiBaseUrl, detectionPoints }) {
           routeInfo={{
             waypoints: mappedPoints.length,
           }}
+          detectionResult={detectionResult}
+          onDownloadReport={onGenerateReport}
         />
       </div>
     </div>

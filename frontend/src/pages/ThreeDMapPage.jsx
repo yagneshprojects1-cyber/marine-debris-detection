@@ -81,7 +81,7 @@ function getDetectionGeoInfo(detection, seabedDepth) {
   };
 }
 
-export default function ThreeDMapPage({ detections = [], shipLatitude, shipLongitude }) {
+export default function ThreeDMapPage({ detections = [], shipLatitude, shipLongitude, onGenerateReport }) {
   const [selectedObj, setSelectedObj] = useState(null);
   const [selectedObjectId, setSelectedObjectId] = useState(null);
   const [heading, setHeading] = useState(0);
@@ -244,6 +244,16 @@ export default function ThreeDMapPage({ detections = [], shipLatitude, shipLongi
                   <span>Confidence</span>
                   <strong>{((activeSelectedObject.detection.confidence || 0) * 100).toFixed(1)}%</strong>
                 </div>
+
+                {onGenerateReport && (
+                  <button
+                    type="button"
+                    onClick={() => onGenerateReport(activeSelectedObject.detection)}
+                    className="three-d-download-button"
+                  >
+                    Download Selected Object
+                  </button>
+                )}
 
                 <div className="three-d-details-grid">
                   <div className="three-d-detail-row">

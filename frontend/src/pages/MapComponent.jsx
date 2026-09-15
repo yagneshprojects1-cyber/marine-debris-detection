@@ -70,6 +70,7 @@ const MapComponent = ({
   fitRouteBounds = true,
   overviewZoom = 4,
   markerZoom = 10,
+  suppressDuplicateRouteClosure = true,
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -87,6 +88,8 @@ const MapComponent = ({
     mapInstanceRef.current = L.map(mapContainerRef.current, {
       center,
       zoom,
+      minZoom: 2,
+      maxZoom: 19,
       zoomControl: true,
     });
 
@@ -168,6 +171,7 @@ const MapComponent = ({
       routeData.forEach((point, index) => {
         // Do not place a duplicate marker icon over #1 if the final waypoint is the return to origin
         if (
+          suppressDuplicateRouteClosure &&
           index > 0 &&
           index === routeData.length - 1 &&
           Math.abs(point.lat - routeData[0].lat) < 1e-5 &&
@@ -230,13 +234,14 @@ const MapComponent = ({
 
     if (fitRouteBounds) {
       if (polyline) {
-        // Multi-point route: fit to polyline bounds.
+        // Multi-point route: fit to polyline bounds but cap zoom to an overview level.
         mapInstanceRef.current.fitBounds(polyline.getBounds(), {
           padding: [40, 40],
+          maxZoom: overviewZoom,
         });
       } else if (latLngs.length === 1) {
-        // Single unique point: center with a fixed zoom.
-          mapInstanceRef.current.setView(latLngs[0], overviewZoom);
+        // Single unique point: center with a fixed overview zoom.
+        mapInstanceRef.current.setView(latLngs[0], overviewZoom);
       } else {
         // Multiple points that may be identical (zero-area bounds).
         const bounds = L.latLngBounds(latLngs);
@@ -262,6 +267,7 @@ const MapComponent = ({
     overviewZoom,
     markerZoom,
     onPointClick,
+    suppressDuplicateRouteClosure,
   ]);
 
   // Navigate to user's current location

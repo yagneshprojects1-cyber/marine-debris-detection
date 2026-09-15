@@ -47,6 +47,21 @@ class PreprocessResponse(BaseModel):
     preprocessed_image_url: str
 
 
+class BatchPreprocessItem(BaseModel):
+    original_filename: str
+    status: str
+    image_id: Optional[str] = None
+    preprocessed_image_url: Optional[str] = None
+    error: Optional[str] = None
+
+
+class BatchPreprocessResponse(BaseModel):
+    total: int
+    accepted: int
+    rejected: int
+    items: List[BatchPreprocessItem]
+
+
 # ── API 2: AI detection ───────────────────────────────────────────────────────
 class DetectionResponse(BaseModel):
     status: str

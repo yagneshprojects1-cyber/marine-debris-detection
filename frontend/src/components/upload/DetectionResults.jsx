@@ -30,7 +30,7 @@ export default function DetectionResults({ detectionResult }) {
             fontSize: "13px",
           }}
         >
-          <strong style={{ color: "#e6edf3" }}>Ship Position:</strong>
+          <strong style={{ color: "#e6edf3" }}>ROV's Position:</strong>
           {detectionResult.ship_water_body && (
             <span style={{ color: "#58a6ff", fontWeight: 600 }}>
               {detectionResult.ship_water_body}

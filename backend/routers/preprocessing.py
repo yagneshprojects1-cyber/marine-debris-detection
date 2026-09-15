@@ -11,11 +11,12 @@ the frontend preview; image processing can be added without changing the API.
 """
 
 from pathlib import Path
+from typing import List
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from database import repository
-from schemas import PreprocessResponse
+from schemas import BatchPreprocessItem, BatchPreprocessResponse, PreprocessResponse
 from services import preprocessing_service
 
 router = APIRouter(prefix="/api", tags=["1 - Preprocessing"])
@@ -58,4 +59,80 @@ async def preprocess_image(
         image_id=image_id,
         original_filename=original_name,
         preprocessed_image_url=f"/media/uploads/{image_id}/{preprocessed_path.name}",
+    )
+
+
+@router.post("/preprocess/batch", response_model=BatchPreprocessResponse)
+async def preprocess_batch(
+    images: List[UploadFile] = File(...),
+    xml_files: List[UploadFile] = File(...),
+):
+    """Store multiple image/XML pairs matched by filename stem."""
+    xml_map: dict[str, UploadFile] = {
+        Path(xml.filename).stem: xml
+        for xml in xml_files
+        if Path(xml.filename).suffix.lower() == ".xml"
+    }
+    results: list[BatchPreprocessItem] = []
+
+    for image_file in images:
+        original_name = Path(image_file.filename).name
+        stem = Path(original_name).stem
+
+        try:
+            preprocessing_service.validate_extension(original_name)
+        except ValueError as exc:
+            results.append(BatchPreprocessItem(
+                original_filename=original_name,
+                status="error",
+                error=str(exc),
+            ))
+            continue
+
+        xml_file = xml_map.get(stem)
+        if xml_file is None:
+            results.append(BatchPreprocessItem(
+                original_filename=original_name,
+                status="error",
+                error=f"No matching XML found for '{original_name}' (expected '{stem}.xml').",
+            ))
+            continue
+
+        try:
+            content = await image_file.read()
+            xml_content = await xml_file.read()
+            image_id, saved_path, preprocessed_path = preprocessing_service.create_upload_session(
+                original_name,
+                content,
+                Path(xml_file.filename).name,
+                xml_content,
+            )
+            repository.save_uploaded_image(
+                image_id=image_id,
+                image_name=original_name,
+                image_path=str(saved_path),
+                preprocessed_path=str(preprocessed_path),
+            )
+        except Exception as exc:
+            results.append(BatchPreprocessItem(
+                original_filename=original_name,
+                status="error",
+                error=f"Failed to process batch item: {exc}",
+            ))
+            continue
+
+        print(f"[Batch Preprocess] '{original_name}' ({len(content)} bytes) -> {saved_path}")
+        results.append(BatchPreprocessItem(
+            original_filename=original_name,
+            status="success",
+            image_id=image_id,
+            preprocessed_image_url=f"/media/uploads/{image_id}/{preprocessed_path.name}",
+        ))
+
+    accepted = sum(1 for item in results if item.status == "success")
+    return BatchPreprocessResponse(
+        total=len(results),
+        accepted=accepted,
+        rejected=len(results) - accepted,
+        items=results,
     )
