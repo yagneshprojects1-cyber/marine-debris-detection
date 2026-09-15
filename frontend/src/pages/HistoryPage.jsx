@@ -23,7 +23,7 @@ const formatBoundingBox = (box = {}) => {
     : "-";
 };
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 10;
 
 const getPageNumbers = (currentPage, totalPages) => {
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -69,6 +69,7 @@ export default function HistoryPage({ apiBaseUrl }) {
       ? historyItems.filter((item) => item.date?.slice(0, 10) === selectedDate)
       : historyItems
   ), [historyItems, selectedDate]);
+
   const totalPages = Math.max(1, Math.ceil(visibleItems.length / ITEMS_PER_PAGE));
   const pageNumbers = getPageNumbers(currentPage, totalPages);
   const paginatedItems = useMemo(() => {
@@ -163,7 +164,10 @@ export default function HistoryPage({ apiBaseUrl }) {
               className="history-filter"
               type="date"
               value={selectedDate}
-              onChange={(event) => setSelectedDate(event.target.value)}
+              onChange={(event) => {
+                setSelectedDate(event.target.value);
+                setCurrentPage(1);
+              }}
             />
           </label>
           <button
@@ -215,7 +219,7 @@ export default function HistoryPage({ apiBaseUrl }) {
                 <tr><td className="history-empty" colSpan="11">No uploaded image detections found.</td></tr>
               )}
               {!loading && !error && paginatedItems.map((item, index) => (
-                <tr key={item.predicted_id || `${item.image_id}-${item.object}-${item.timestamp}`}>
+                <tr key={item.predicted_id || `${item.image_id}-${item.object}-${item.timestamp}-${index}`}>
                   <td className="history-serial">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
                   <td>
                     <button
@@ -245,7 +249,7 @@ export default function HistoryPage({ apiBaseUrl }) {
           </table>
         </div>
 
-        {visibleItems.length > 0 && (
+        {visibleItems.length > 0 && totalPages > 1 && (
           <nav className="history-pagination" aria-label="Detection history pages">
             <button
               type="button"
@@ -254,11 +258,11 @@ export default function HistoryPage({ apiBaseUrl }) {
               disabled={currentPage === 1}
               aria-label="Previous page"
             >
-              &#8249;
+              &#8249; Previous
             </button>
-            {pageNumbers.map((page) => (
-              page.toString().startsWith("ellipsis") ? (
-                <span key={page} className="history-page-ellipsis" aria-hidden="true">...</span>
+            {pageNumbers.map((page, idx) => (
+              typeof page === "string" && page.startsWith("ellipsis") ? (
+                <span key={`ellipsis-${idx}`} className="history-page-ellipsis" aria-hidden="true">...</span>
               ) : (
                 <button
                   key={page}
@@ -278,7 +282,7 @@ export default function HistoryPage({ apiBaseUrl }) {
               disabled={currentPage === totalPages}
               aria-label="Next page"
             >
-              &#8250;
+              Next &#8250;
             </button>
           </nav>
         )}

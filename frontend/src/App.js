@@ -4,12 +4,13 @@ import Navbar from './pages/navbar';
 import PageContent from './pages/PageContent';
 import RoleSelectionPage from './roles/RoleSelectionPage';
 import RoleLandingPage from './roles/RoleLandingPage';
+import ManagerDashboard from './roles/manager/ManagerDashboard';
+import OperatorDashboard from './roles/operator/OperatorDashboard';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
 
 function App() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [detections, setDetections] = useState([]);
   const [databaseDetections, setDatabaseDetections] = useState([]);
   const [detectionResult, setDetectionResult] = useState(null);
   const [showAnalysisToast, setShowAnalysisToast] = useState(false);
@@ -33,7 +34,6 @@ function App() {
 
   const handleDetectionComplete = (result) => {
     setDetectionResult(result);
-    setDetections(result?.objects_detected || []);
     loadMapData();
     setShowAnalysisToast(Boolean(result));
   };
@@ -77,13 +77,16 @@ function App() {
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-    setActiveTab("dashboard");
+    if (role === "Marine Debris Removal Operator") {
+      setActiveTab("my-tasks");
+    } else {
+      setActiveTab("dashboard");
+    }
   };
 
   const handleLogout = () => {
     setSelectedRole(null);
     setDetectionResult(null);
-    setDetections([]);
     setActiveTab("dashboard");
   };
 
@@ -92,6 +95,8 @@ function App() {
   }
 
   const isSonarAnalyst = selectedRole === "Sonar Analyst";
+  const isManager = selectedRole === "Supervisor / Manager";
+  const isOperator = selectedRole === "Marine Debris Removal Operator";
 
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -113,6 +118,14 @@ function App() {
             onDetectionComplete={handleDetectionComplete}
             onNavigate={setActiveTab}
             onGenerateReport={handleGenerateReport}
+          />
+        ) : isManager ? (
+          <ManagerDashboard
+            activeTab={activeTab}
+          />
+        ) : isOperator ? (
+          <OperatorDashboard
+            activeTab={activeTab}
           />
         ) : (
           <RoleLandingPage role={selectedRole} />

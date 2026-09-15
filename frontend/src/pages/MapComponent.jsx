@@ -109,7 +109,25 @@ const MapComponent = ({
 
     mapInstanceRef.current.on("click", handleMapClick);
 
+    // Invalidate map size on mount/resize to ensure tiles load properly inside modal pop-ups
+    const resizeObserver = new ResizeObserver(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    });
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
+    const timer = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 150);
+
     return () => {
+      clearTimeout(timer);
+      resizeObserver.disconnect();
       mapInstanceRef.current?.off("click", handleMapClick);
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;

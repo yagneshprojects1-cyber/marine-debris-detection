@@ -58,6 +58,8 @@ app.include_router(route_planning.router)
 app.include_router(history.router)
 app.include_router(map_data.router)
 app.include_router(roles_router.router)
+app.include_router(roles_router.manager_router)
+app.include_router(roles_router.operator_router)
 
 
 @app.get("/", tags=["Health"])

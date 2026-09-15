@@ -132,6 +132,37 @@ export default function RouteOptimizationPage({ apiBaseUrl }) {
     computeRoute(newSourceId, rawTargets);
   };
 
+  // Auto-fetch database debris targets if no CSV uploaded yet
+  React.useEffect(() => {
+    const fetchDatabaseTargets = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${apiBaseUrl}/api/manager/detections`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const formatted = data.map((item, i) => ({
+              id: item.id || `target_${i + 1}`,
+              name: item.name || `Debris #${i + 1}`,
+              latitude: Number(item.latitude) || 18.9220,
+              longitude: Number(item.longitude) || 72.8347,
+            }));
+            setRawTargets(formatted);
+            const firstId = formatted[0].id;
+            setSelectedSourceId(firstId);
+            computeRoute(firstId, formatted);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to auto-fetch database targets for route optimization:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDatabaseTargets();
+  }, [apiBaseUrl, computeRoute]);
+
   // Map route markers & path data
   const routeData =
     optimalRoute?.waypoints?.map((wp) => ({
@@ -152,7 +183,17 @@ export default function RouteOptimizationPage({ apiBaseUrl }) {
     }));
 
   return (
-    <div className="map-page-container" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div
+      className="map-page-container"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "clamp(550px, 75vh, 850px)",
+        minHeight: "550px",
+        width: "100%",
+        position: "relative",
+      }}
+    >
       {/* Top Action Bar */}
       <div
         style={{
@@ -211,8 +252,8 @@ export default function RouteOptimizationPage({ apiBaseUrl }) {
       )}
 
       {/* Main Map + Sidebar Content */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        <div className="map-container" style={{ flex: 1, position: "relative" }}>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: "480px" }}>
+        <div className="map-container" style={{ flex: 1, position: "relative", minHeight: "480px" }}>
           <MapComponent
             routeData={routeData}
             pathColor="#2563eb"
