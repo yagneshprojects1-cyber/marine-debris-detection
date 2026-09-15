@@ -74,6 +74,26 @@ class DetectionResponse(BaseModel):
     annotated_image_url: Optional[str] = None
 
 
+class AnalystTrainingLabel(BaseModel):
+    detection_index: int
+    analyst_name: str
+
+
+class SaveTrainingDataRequest(BaseModel):
+    labels: List[AnalystTrainingLabel] = []
+    annotated_image_url: Optional[str] = None
+
+
+class BatchSaveTrainingItem(BaseModel):
+    image_id: str
+    labels: List[AnalystTrainingLabel] = []
+    annotated_image_url: Optional[str] = None
+
+
+class BatchSaveTrainingRequest(BaseModel):
+    items: List[BatchSaveTrainingItem]
+
+
 # ── API 3: Report (mirrors the classic XML annotation format) ─────────────────
 class SonarInfo(BaseModel):
     range: Optional[float] = None

@@ -270,14 +270,15 @@ async def detect_objects(image_id: str):
     # --------------------------------------------------
     detection_documents = [obj.model_dump() for obj in detected_objects]
     session_store.save_detections(image_id, detection_documents)
-    try:
-        repository.save_detection_results(
-            image_id=image_id,
-            annotation=session["annotation"],
-            detections=detection_documents,
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Detection database is unavailable: {exc}") from exc
+    if not session.get("defer_persistence", False):
+        try:
+            repository.save_detection_results(
+                image_id=image_id,
+                annotation=session["annotation"],
+                detections=detection_documents,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail=f"Detection database is unavailable: {exc}") from exc
 
     message = (
         f"{len(detected_objects)} object(s) detected."

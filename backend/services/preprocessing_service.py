@@ -22,7 +22,13 @@ def copy_as_preprocessed(source_path: Path) -> Path:
     return destination
 
 
-def create_upload_session(original_name: str, content: bytes, annotation_name: str, annotation_content: bytes) -> tuple[str, Path, Path]:
+def create_upload_session(
+    original_name: str,
+    content: bytes,
+    annotation_name: str,
+    annotation_content: bytes,
+    defer_persistence: bool = False,
+) -> tuple[str, Path, Path]:
     """Persist image/XML uploads, create the preview copy, and register the session."""
     import uuid
 
@@ -40,6 +46,8 @@ def create_upload_session(original_name: str, content: bytes, annotation_name: s
         image_id=image_id,
         original_filename=original_name,
         upload_path=str(saved_path),
+        preprocessed_path=str(preprocessed_path),
         annotation=annotation,
+        defer_persistence=defer_persistence,
     )
     return image_id, saved_path, preprocessed_path

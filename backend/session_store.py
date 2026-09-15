@@ -15,14 +15,23 @@ _lock = threading.Lock()
 _sessions: Dict[str, Dict[str, Any]] = {}
 
 
-def create_session(image_id: str, original_filename: str, upload_path: str, annotation: Dict[str, Any]) -> str:
+def create_session(
+    image_id: str,
+    original_filename: str,
+    upload_path: str,
+    preprocessed_path: str,
+    annotation: Dict[str, Any],
+    defer_persistence: bool = False,
+) -> str:
     """Register a freshly uploaded image under the given image_id."""
     with _lock:
         _sessions[image_id] = {
             "image_id": image_id,
             "original_filename": original_filename,
             "upload_path": upload_path,
+            "preprocessed_path": preprocessed_path,
             "annotation": annotation,
+            "defer_persistence": defer_persistence,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "detections": None,  # filled in by the detection API
         }

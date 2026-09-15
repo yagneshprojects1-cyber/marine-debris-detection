@@ -45,6 +45,23 @@ export async function batchPreprocess(apiBaseUrl, imageFiles, xmlFiles) {
   return data;
 }
 
+export async function simulationPreprocess(apiBaseUrl, imageFiles, xmlFiles, startFile, fileCount) {
+  const formData = new FormData();
+  imageFiles.forEach((file) => formData.append("images", file));
+  xmlFiles.forEach((file) => formData.append("xml_files", file));
+  formData.append("start_bmp", startFile);
+  formData.append("file_count", String(fileCount));
+
+  const response = await fetch(`${apiBaseUrl}/api/preprocess/simulation`, {
+    method: "POST",
+    body: formData,
+  });
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data.detail || "Simulation preprocessing failed");
+  return data;
+}
+
 export async function batchDetect(apiBaseUrl, imageIds, onProgress) {
   const results = [];
 
@@ -62,4 +79,30 @@ export async function batchDetect(apiBaseUrl, imageIds, onProgress) {
   }
 
   return results;
+}
+
+export async function acceptDetection(apiBaseUrl, imageId, labels, annotatedImageUrl) {
+  const response = await fetch(`${apiBaseUrl}/api/history/${imageId}/accept`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      labels,
+      annotated_image_url: annotatedImageUrl,
+    }),
+  });
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data.detail || "Unable to store detection in history");
+  return data;
+}
+
+export async function acceptBatchDetections(apiBaseUrl, items) {
+  const response = await fetch(`${apiBaseUrl}/api/history/batch/accept`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || "Unable to save batch results");
+  return data;
 }

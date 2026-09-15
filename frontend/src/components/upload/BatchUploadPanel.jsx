@@ -10,7 +10,13 @@
  *   summary — optional { total, accepted, rejected } from the preprocess response
  *   onItemClick — optional callback for completed items with detection results
  */
-export default function BatchUploadPanel({ items, summary, onItemClick, selectedImageId }) {
+export default function BatchUploadPanel({
+  items,
+  summary,
+  onItemClick,
+  acceptedImageIds = [],
+  selectedImageId,
+}) {
   if (!items || items.length === 0) return null;
 
   return (
@@ -33,12 +39,13 @@ export default function BatchUploadPanel({ items, summary, onItemClick, selected
         {items.map((item, idx) => {
           const canOpen = item.phase === "done" && item.result;
           const active = selectedImageId && item.result?.image_id === selectedImageId;
+          const stored = item.result?.image_id && acceptedImageIds.includes(item.result.image_id);
 
           return (
           <li key={item.filename + idx} className="batch-item-shell">
             <button
               type="button"
-              className={`batch-item batch-item--${item.phase}${canOpen ? " batch-item--clickable" : ""}${active ? " active" : ""}`}
+              className={`batch-item batch-item--${item.phase}${canOpen ? " batch-item--clickable" : ""}${active ? " active" : ""}${stored ? " batch-item--stored" : ""}`}
               onClick={() => canOpen && onItemClick?.(item)}
               disabled={!canOpen}
               title={canOpen ? `Open details for ${item.filename}` : phaseLabel(item.phase, item.result)}

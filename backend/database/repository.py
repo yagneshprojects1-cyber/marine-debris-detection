@@ -88,6 +88,38 @@ def save_detection_results(image_id: str, annotation: dict[str, Any], detections
         database["ai_predictions"].insert_one(prediction.model_dump(mode="json"))
 
 
+def save_training_data(
+    image_id: str,
+    image_name: str,
+    image_path: str,
+    preprocessed_path: str,
+    annotation: dict[str, Any],
+    detections: list[dict[str, Any]],
+    analyst_labels: list[dict[str, Any]],
+    annotated_image_url: str | None,
+    confidence_threshold: float,
+) -> None:
+    """Save the complete analyst-reviewed record for future model training."""
+    database = get_database()
+    document = {
+        "image_id": image_id,
+        "image_name": image_name,
+        "image_path": image_path,
+        "preprocessed_image_path": preprocessed_path,
+        "annotated_image_url": annotated_image_url,
+        "annotation": annotation,
+        "ai_predictions": detections,
+        "analyst_labels": analyst_labels,
+        "confidence_threshold": confidence_threshold,
+        "reviewed_at": datetime.now(timezone.utc),
+    }
+    database["ai_training_data"].replace_one(
+        {"image_id": image_id},
+        document,
+        upsert=True,
+    )
+
+
 def list_history() -> list[dict[str, Any]]:
     """Return database-backed history rows joined with image details."""
     database = get_database()
@@ -120,7 +152,11 @@ def list_history() -> list[dict[str, Any]]:
             "image_id": prediction.get("image_id"),
             "image_name": image.get("image_name"),
         })
-    return rows
+    return sorted(
+        rows,
+        key=lambda row: row.get("timestamp") or row.get("date") or "",
+        reverse=True,
+    )
 
 
 def list_map_detections() -> dict[str, Any]:

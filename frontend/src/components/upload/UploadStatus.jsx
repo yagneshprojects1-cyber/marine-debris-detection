@@ -5,7 +5,9 @@ export default function UploadStatus({ uploading, detecting, error, preprocessIn
       {detecting && <div className="status-banner info">Step 2/2 - Running YOLO detection...</div>}
       {error && <div className="status-banner error">Error: {error}</div>}
       {preprocessInfo && !isBusy && (
-        <div className="status-banner success">{preprocessInfo.message}</div>
+        <div className={`status-banner ${preprocessInfo.type === "note" ? "note" : "success"}`}>
+          {preprocessInfo.message}
+        </div>
       )}
     </>
   );

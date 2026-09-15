@@ -23,6 +23,17 @@ const formatBoundingBox = (box = {}) => {
     : "-";
 };
 
+const ITEMS_PER_PAGE = 15;
+
+const getPageNumbers = (currentPage, totalPages) => {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
+  if (currentPage <= 4) return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+  if (currentPage >= totalPages - 3) {
+    return [1, "ellipsis-start", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, "ellipsis-start", currentPage - 1, currentPage, currentPage + 1, "ellipsis-end", totalPages];
+};
+
 export default function HistoryPage({ apiBaseUrl }) {
   const [historyItems, setHistoryItems] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -31,6 +42,7 @@ export default function HistoryPage({ apiBaseUrl }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshToken, setRefreshToken] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,11 +69,25 @@ export default function HistoryPage({ apiBaseUrl }) {
       ? historyItems.filter((item) => item.date?.slice(0, 10) === selectedDate)
       : historyItems
   ), [historyItems, selectedDate]);
+  const totalPages = Math.max(1, Math.ceil(visibleItems.length / ITEMS_PER_PAGE));
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return visibleItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [currentPage, visibleItems]);
   const confidences = visibleItems.map((item) => Number(item.confidence)).filter(Number.isFinite);
   const averageConfidence = confidences.length
     ? ((confidences.reduce((total, confidence) => total + confidence, 0) / confidences.length) * 100).toFixed(1)
     : "0.0";
   const highestConfidence = confidences.length ? (Math.max(...confidences) * 100).toFixed(1) : "0.0";
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate, refreshToken]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   const handleGetDetails = (item) => {
     setSelectedHistoryItem(item);
@@ -154,8 +180,23 @@ export default function HistoryPage({ apiBaseUrl }) {
 
         <div className="history-table-scroll">
           <table className="history-table">
+            <colgroup>
+              <col className="history-col-serial" />
+              <col className="history-col-details" />
+              <col className="history-col-object" />
+              <col className="history-col-confidence" />
+              <col className="history-col-coordinate" />
+              <col className="history-col-coordinate" />
+              <col className="history-col-date" />
+              <col className="history-col-date" />
+              <col className="history-col-bounding-box" />
+              <col className="history-col-id" />
+              <col className="history-col-image" />
+            </colgroup>
             <thead>
               <tr>
+                <th>S.No.</th>
+                <th>Details</th>
                 <th>Object</th>
                 <th>Confidence</th>
                 <th>Latitude</th>
@@ -168,13 +209,23 @@ export default function HistoryPage({ apiBaseUrl }) {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td className="history-empty" colSpan="9">Loading database history...</td></tr>}
-              {!loading && error && <tr><td className="history-empty history-error" colSpan="9">{error}</td></tr>}
+              {loading && <tr><td className="history-empty" colSpan="11">Loading database history...</td></tr>}
+              {!loading && error && <tr><td className="history-empty history-error" colSpan="11">{error}</td></tr>}
               {!loading && !error && visibleItems.length === 0 && (
-                <tr><td className="history-empty" colSpan="9">No uploaded image detections found.</td></tr>
+                <tr><td className="history-empty" colSpan="11">No uploaded image detections found.</td></tr>
               )}
-              {!loading && !error && visibleItems.map((item) => (
+              {!loading && !error && paginatedItems.map((item, index) => (
                 <tr key={item.predicted_id || `${item.image_id}-${item.object}-${item.timestamp}`}>
+                  <td className="history-serial">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="history-detail-button"
+                      onClick={() => handleGetDetails(item)}
+                    >
+                      Get Details
+                    </button>
+                  </td>
                   <td>{item.object}</td>
                   <td><span className="history-confidence">{(Number(item.confidence || 0) * 100).toFixed(1)}%</span></td>
                   <td className="history-mono">{formatCoordinate(item.latitude)}</td>
@@ -186,13 +237,6 @@ export default function HistoryPage({ apiBaseUrl }) {
                   <td>
                     <div className="history-row-actions">
                       <span>{item.image_name || "-"}</span>
-                      <button
-                        type="button"
-                        className="history-detail-button"
-                        onClick={() => handleGetDetails(item)}
-                      >
-                        Get Details
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -200,6 +244,44 @@ export default function HistoryPage({ apiBaseUrl }) {
             </tbody>
           </table>
         </div>
+
+        {visibleItems.length > 0 && (
+          <nav className="history-pagination" aria-label="Detection history pages">
+            <button
+              type="button"
+              className="history-page-button history-page-arrow"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              aria-label="Previous page"
+            >
+              &#8249;
+            </button>
+            {pageNumbers.map((page) => (
+              page.toString().startsWith("ellipsis") ? (
+                <span key={page} className="history-page-ellipsis" aria-hidden="true">...</span>
+              ) : (
+                <button
+                  key={page}
+                  type="button"
+                  className={`history-page-button${currentPage === page ? " active" : ""}`}
+                  onClick={() => setCurrentPage(page)}
+                  aria-current={currentPage === page ? "page" : undefined}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+            <button
+              type="button"
+              className="history-page-button history-page-arrow"
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages}
+              aria-label="Next page"
+            >
+              &#8250;
+            </button>
+          </nav>
+        )}
 
         {selectedDetail && (
           <section className="history-detail-panel" aria-label="Selected history item details">

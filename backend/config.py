@@ -36,6 +36,7 @@ CALCULATED_POSITIONS_PATH = BASE_DIR / "geotag_calculated.json"
 
 # ── Detection settings ────────────────────────────────────────────────────────
 CONFIDENCE_THRESHOLD = 0.25
+AI_REVIEW_THRESHOLD = 0.70
 ALLOWED_EXTENSIONS = {".bmp", ".png", ".jpg", ".jpeg"}
 
 # Sonar geometry is supplied by each uploaded XML annotation.

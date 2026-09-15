@@ -13,9 +13,8 @@ the frontend preview; image processing can be added without changing the API.
 from pathlib import Path
 from typing import List
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from database import repository
 from schemas import BatchPreprocessItem, BatchPreprocessResponse, PreprocessResponse
 from services import preprocessing_service
 
@@ -40,17 +39,8 @@ async def preprocess_image(
     content = await file.read()
     xml_content = await xml_file.read()
     image_id, saved_path, preprocessed_path = preprocessing_service.create_upload_session(
-        original_name, content, xml_name, xml_content
+        original_name, content, xml_name, xml_content, defer_persistence=True
     )
-    try:
-        repository.save_uploaded_image(
-            image_id=image_id,
-            image_name=original_name,
-            image_path=str(saved_path),
-            preprocessed_path=str(preprocessed_path),
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Image database is unavailable: {exc}") from exc
     print(f"[Preprocess] Received '{original_name}' ({len(content)} bytes) -> {saved_path}")
 
     return PreprocessResponse(
@@ -106,12 +96,7 @@ async def preprocess_batch(
                 content,
                 Path(xml_file.filename).name,
                 xml_content,
-            )
-            repository.save_uploaded_image(
-                image_id=image_id,
-                image_name=original_name,
-                image_path=str(saved_path),
-                preprocessed_path=str(preprocessed_path),
+                defer_persistence=True,
             )
         except Exception as exc:
             results.append(BatchPreprocessItem(
@@ -136,3 +121,50 @@ async def preprocess_batch(
         rejected=len(results) - accepted,
         items=results,
     )
+
+
+@router.post("/preprocess/simulation", response_model=BatchPreprocessResponse)
+async def preprocess_simulation(
+    images: List[UploadFile] = File(...),
+    xml_files: List[UploadFile] = File(...),
+    start_bmp: str = Form(...),
+    file_count: int = Form(...),
+):
+    """Select a numbered BMP range from a folder and run the batch pipeline."""
+    if file_count < 1:
+        raise HTTPException(status_code=400, detail="File count must be at least 1.")
+
+    normalized_start = Path(start_bmp).name.lower()
+    image_files = [
+        image for image in images
+        if Path(image.filename or "").suffix.lower() == ".bmp"
+    ]
+    xml_stems = {
+        Path(xml.filename or "").stem.lower()
+        for xml in xml_files
+        if Path(xml.filename or "").suffix.lower() == ".xml"
+    }
+    image_files = [
+        image for image in image_files
+        if Path(image.filename or "").stem.lower() in xml_stems
+    ]
+    image_files.sort(key=lambda image: Path(image.filename or "").name.lower())
+    start_index = next(
+        (index for index, image in enumerate(image_files)
+         if Path(image.filename or "").name.lower() == normalized_start),
+        None,
+    )
+    if start_index is None:
+        raise HTTPException(status_code=400, detail=f"Starting BMP file '{start_bmp}' was not found in the selected folder.")
+
+    if start_index + file_count > len(image_files):
+        raise HTTPException(
+            status_code=400,
+            detail=f"File count exceeds the {len(image_files) - start_index} matched BMP/XML file(s) available from the selected start file.",
+        )
+
+    selected_images = image_files[start_index:start_index + file_count]
+    if not selected_images:
+        raise HTTPException(status_code=400, detail="No BMP files found for the requested simulation range.")
+
+    return await preprocess_batch(selected_images, xml_files)

@@ -1,14 +1,13 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import "./UploadPage.css";
 import UploadHeader from "../components/upload/UploadHeader";
-import UploadToolbar from "../components/upload/UploadToolbar";
 import UploadStatus from "../components/upload/UploadStatus";
-import ImagePreviews from "../components/upload/ImagePreviews";
-import DetectionResults from "../components/upload/DetectionResults";
 import BatchDetectionDetail from "../components/upload/BatchDetectionDetail";
 import BatchUploadPanel from "../components/upload/BatchUploadPanel";
 import BatchUploadToolbar from "../components/upload/BatchUploadToolbar";
-import { batchDetect, batchPreprocess, detectImage, preprocessImage } from "../utils/detectionApi";
+import SimulationUploadToolbar from "../components/upload/SimulationUploadToolbar";
+import BatchSaveReviewModal from "../components/upload/BatchSaveReviewModal";
+import { acceptBatchDetections, acceptDetection, batchDetect, batchPreprocess, simulationPreprocess } from "../utils/detectionApi";
 
 /**
  * UploadPage.jsx
@@ -28,16 +27,22 @@ export default function UploadPage({
   aiApiBaseUrl,
   onDetectionComplete,
 }) {
-  const [uploadMode, setUploadMode] = useState("single");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedXmlFile, setSelectedXmlFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploadMode, setUploadMode] = useState("simulation");
+  const [simulationImageFiles, setSimulationImageFiles] = useState([]);
+  const [simulationXmlFiles, setSimulationXmlFiles] = useState([]);
+  const [simulationStartFile, setSimulationStartFile] = useState("");
+  const [simulationFileCount, setSimulationFileCount] = useState("15");
+  const [simulationCompleted, setSimulationCompleted] = useState(false);
   const [batchImageFiles, setBatchImageFiles] = useState([]);
   const [batchXmlFiles, setBatchXmlFiles] = useState([]);
   const [batchItems, setBatchItems] = useState([]);
   const [batchSummary, setBatchSummary] = useState(null);
   const [selectedBatchItem, setSelectedBatchItem] = useState(null);
   const [batchDetailView, setBatchDetailView] = useState("results");
+  const [acceptedBatchIds, setAcceptedBatchIds] = useState([]);
+  const [batchSaveOpen, setBatchSaveOpen] = useState(false);
+  const [batchSaving, setBatchSaving] = useState(false);
+  const [batchSaved, setBatchSaved] = useState(false);
 
   const [preprocessInfo, setPreprocessInfo] = useState(null); // { message, imageUrl }
   const [detectionResult, setDetectionResult] = useState(null);
@@ -45,13 +50,12 @@ export default function UploadPage({
   const [uploading, setUploading] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [error, setError] = useState("");
-  const fileInputRef = useRef(null);
-
   const handleUploadOtherImage = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setSelectedFile(null);
-    setSelectedXmlFile(null);
-    setPreviewUrl(null);
+    setSimulationImageFiles([]);
+    setSimulationXmlFiles([]);
+    setSimulationStartFile("");
+    setSimulationFileCount("15");
+    setSimulationCompleted(false);
     setPreprocessInfo(null);
     setDetectionResult(null);
     setBatchImageFiles([]);
@@ -60,8 +64,10 @@ export default function UploadPage({
     setBatchSummary(null);
     setSelectedBatchItem(null);
     setBatchDetailView("results");
+    setAcceptedBatchIds([]);
+    setBatchSaveOpen(false);
+    setBatchSaved(false);
     setError("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
     if (onDetectionComplete) onDetectionComplete(null);
   };
 
@@ -71,86 +77,79 @@ export default function UploadPage({
     setUploadMode(mode);
   };
 
-  /* -- Step 0: file selection ------------------------------------------------ */
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setPreprocessInfo(null);
-    setDetectionResult(null);
+  const handleSimulationFolderChange = (files) => {
+    const allImages = files.filter((file) => file.name.toLowerCase().endsWith(".bmp"));
+    const allXmls = files.filter((file) => file.name.toLowerCase().endsWith(".xml"));
+    const xmlStems = new Set(allXmls.map((file) => file.name.replace(/\.[^.]+$/, "").toLowerCase()));
+    const images = allImages.filter((file) => xmlStems.has(file.name.replace(/\.[^.]+$/, "").toLowerCase()));
+    const imageStems = new Set(images.map((file) => file.name.replace(/\.[^.]+$/, "").toLowerCase()));
+    const xmls = allXmls.filter((file) => imageStems.has(file.name.replace(/\.[^.]+$/, "").toLowerCase()));
+    setSimulationImageFiles(images);
+    setSimulationXmlFiles(xmls);
+    setSimulationStartFile(images[0]?.name || "");
+    setSimulationCompleted(false);
     setError("");
-    if (onDetectionComplete) onDetectionComplete(null);
-
-    if (!file) return;
-    /*
-    if (!file.name.toLowerCase().endsWith(".bmp")) {
-      alert("Please select a .bmp format image.");
-      e.target.value = "";
-      return;
-    }
-    */
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const handleXmlChange = (e) => {
-    setSelectedXmlFile(e.target.files[0] || null);
-    setError("");
-  };
-
-  /* -- Full pipeline: preprocess -> detect ------------------------------------ */
-  const handleUploadAndDetect = async () => {
-    if (!selectedFile || !selectedXmlFile) {
-      setError("Choose both an image and its XML annotation file.");
-      return;
-    }
-
-    setUploading(true);
-    setError("");
-    setDetectionResult(null);
-    if (onDetectionComplete) onDetectionComplete(null);
-
-    try {
-      const { imageId, info } = await preprocessImage(aiApiBaseUrl, selectedFile, selectedXmlFile);
-      setPreprocessInfo(info);
-
-      setUploading(false);
-      setDetecting(true);
-      const result = await detectImage(aiApiBaseUrl, imageId);
-      setDetectionResult(result);
-      if (onDetectionComplete) onDetectionComplete(result);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setUploading(false);
-      setDetecting(false);
-    }
+    setPreprocessInfo(
+      images.length < allImages.length || xmls.length < allXmls.length
+        ? {
+            type: "note",
+            message: "Note: only BMP/XML files with matching names were selected. Unmatched files were excluded.",
+          }
+        : null,
+    );
   };
 
   const handleBatchUploadAndDetect = async () => {
-    if (batchImageFiles.length === 0 || batchXmlFiles.length === 0) {
-      setError("Choose batch images and their matching XML annotation files.");
+    const isSimulation = uploadMode === "simulation";
+    const availableImages = isSimulation ? simulationImageFiles : batchImageFiles;
+    const availableXmls = isSimulation ? simulationXmlFiles : batchXmlFiles;
+    let imageFiles = availableImages;
+    let xmlFiles = availableXmls;
+
+    if (availableImages.length === 0 || availableXmls.length === 0) {
+      setError(isSimulation ? "Choose a simulation folder with BMP and XML files." : "Choose batch images and their matching XML annotation files.");
       return;
+    }
+    if (isSimulation && (!simulationStartFile || Number(simulationFileCount) < 1)) {
+      setError("Enter a starting BMP file and a file count for the simulation.");
+      return;
+    }
+    const startIndex = availableImages.findIndex((file) => file.name === simulationStartFile);
+    if (isSimulation && (startIndex < 0 || startIndex + Number(simulationFileCount) > availableImages.length)) {
+      setError(`The simulation count cannot exceed the ${availableImages.length - Math.max(startIndex, 0)} matched BMP/XML file(s) available from the selected start file.`);
+      return;
+    }
+    if (isSimulation) {
+      imageFiles = availableImages.slice(startIndex, startIndex + Number(simulationFileCount));
+      const selectedStems = new Set(imageFiles.map((file) => file.name.replace(/\.[^.]+$/, "").toLowerCase()));
+      xmlFiles = availableXmls.filter((file) => selectedStems.has(file.name.replace(/\.[^.]+$/, "").toLowerCase()));
     }
 
     setUploading(true);
+    if (isSimulation) setSimulationCompleted(false);
     setError("");
     setDetectionResult(null);
     setPreprocessInfo(null);
     setBatchSummary(null);
     setSelectedBatchItem(null);
     setBatchDetailView("results");
-    setBatchItems(batchImageFiles.map((file) => ({
+    setAcceptedBatchIds([]);
+    setBatchSaved(false);
+    setBatchItems(imageFiles.map((file) => ({
       filename: file.name,
       phase: "queued",
     })));
     if (onDetectionComplete) onDetectionComplete(null);
 
     try {
-      setBatchItems(batchImageFiles.map((file) => ({
+      setBatchItems(imageFiles.map((file) => ({
         filename: file.name,
         phase: "preprocessing",
       })));
 
-      const preprocessResult = await batchPreprocess(aiApiBaseUrl, batchImageFiles, batchXmlFiles);
+      const preprocessResult = isSimulation
+        ? await simulationPreprocess(aiApiBaseUrl, imageFiles, xmlFiles, simulationStartFile, simulationFileCount)
+        : await batchPreprocess(aiApiBaseUrl, imageFiles, xmlFiles);
       setBatchSummary({
         total: preprocessResult.total,
         accepted: preprocessResult.accepted,
@@ -201,6 +200,7 @@ export default function UploadPage({
         message: `Batch complete: ${successfulResults.length}/${acceptedItems.length} image(s) detected.`,
       });
       if (onDetectionComplete) onDetectionComplete(latestResult);
+      if (isSimulation) setSimulationCompleted(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -211,7 +211,37 @@ export default function UploadPage({
 
   const isBusy = uploading || detecting;
   const hasBatchActivity = batchItems.length > 0;
-  const showSingleAnalysis = uploadMode === "single";
+
+  const handleAcceptBatchItem = async (item, labels) => {
+    const imageId = item.result?.image_id;
+    if (!imageId || acceptedBatchIds.includes(imageId)) return;
+
+    try {
+      await acceptDetection(
+        aiApiBaseUrl,
+        imageId,
+        labels,
+        item.result.annotated_image_url,
+      );
+      setAcceptedBatchIds((currentIds) => [...currentIds, imageId]);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleSaveAll = async (records) => {
+    setBatchSaving(true);
+    try {
+      const response = await acceptBatchDetections(aiApiBaseUrl, records);
+      setAcceptedBatchIds((currentIds) => [...new Set([...currentIds, ...response.image_ids])]);
+      setBatchSaved(true);
+      setBatchSaveOpen(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBatchSaving(false);
+    }
+  };
 
   return (
     <div className="upload-page">
@@ -222,11 +252,11 @@ export default function UploadPage({
           <div className="upload-mode-toggle" aria-label="Upload mode">
             <button
               type="button"
-              className={uploadMode === "single" ? "active" : ""}
-              onClick={() => handleModeChange("single")}
+              className={uploadMode === "simulation" ? "active" : ""}
+              onClick={() => handleModeChange("simulation")}
               disabled={isBusy}
             >
-              Single
+              Simulation
             </button>
             <button
               type="button"
@@ -237,17 +267,19 @@ export default function UploadPage({
               Batch
             </button>
           </div>
-          {uploadMode === "single" ? (
-            <UploadToolbar
-              fileInputRef={fileInputRef}
-              selectedFile={selectedFile}
-              selectedXmlFile={selectedXmlFile}
-              onFileChange={handleFileChange}
-              onXmlChange={handleXmlChange}
-              onSubmit={handleUploadAndDetect}
+          {uploadMode === "simulation" ? (
+            <SimulationUploadToolbar
+              imageFiles={simulationImageFiles}
+              xmlFiles={simulationXmlFiles}
+              startFile={simulationStartFile}
+              fileCount={simulationFileCount}
+              onFolderChange={handleSimulationFolderChange}
+              onStartFileChange={setSimulationStartFile}
+              onFileCountChange={setSimulationFileCount}
+              onSubmit={handleBatchUploadAndDetect}
               disabled={isBusy}
-              uploading={uploading}
-              detecting={detecting}
+              running={isBusy}
+              completed={simulationCompleted}
             />
           ) : (
             <BatchUploadToolbar
@@ -287,16 +319,31 @@ export default function UploadPage({
                   onViewChange={setBatchDetailView}
                   onBack={() => setSelectedBatchItem(null)}
                   apiBaseUrl={aiApiBaseUrl}
+                  onAccept={handleAcceptBatchItem}
+                  accepted={acceptedBatchIds.includes(selectedBatchItem.result.image_id)}
                 />
               ) : (
                 <>
                   <div className="workspace-section-heading">
                     <h2>Batch analysis progress</h2>
-                    <span>{isBusy ? "Running detections" : "Batch complete"}</span>
+                    <div className="batch-completion-actions">
+                      <span>{isBusy ? "Running detections" : "Batch complete"}</span>
+                      {!isBusy && batchItems.some((item) => item.phase === "done" && item.result) && (
+                        <button
+                          type="button"
+                          className={`batch-save-all-button${batchSaved ? " saved" : ""}`}
+                          onClick={() => setBatchSaveOpen(true)}
+                          disabled={batchSaved}
+                        >
+                          {batchSaved ? "All data saved" : "Save all in database"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <BatchUploadPanel
                     items={batchItems}
                     summary={batchSummary}
+                    acceptedImageIds={acceptedBatchIds}
                     onItemClick={(item) => {
                       setSelectedBatchItem(item);
                       setBatchDetailView("results");
@@ -306,15 +353,24 @@ export default function UploadPage({
               )}
             </section>
           )}
-          {showSingleAnalysis && (
-            <ImagePreviews
+          {!detectionResult && !hasBatchActivity && !isBusy && (
+            <div className="empty-workspace" aria-live="polite">
+              <span className="empty-mark" aria-hidden="true">+</span>
+              <h2>Your analysis will appear here</h2>
+              <p>
+                Upload sonar image data to begin detecting and reviewing marine debris.
+              </p>
+            </div>
+          )}
+          {batchSaveOpen && (
+            <BatchSaveReviewModal
+              items={batchItems}
+              onClose={() => setBatchSaveOpen(false)}
+              onSave={handleSaveAll}
               apiBaseUrl={aiApiBaseUrl}
-              previewUrl={previewUrl}
-              preprocessInfo={preprocessInfo}
-              detectionResult={detectionResult}
+              saving={batchSaving}
             />
           )}
-          {showSingleAnalysis && <DetectionResults detectionResult={detectionResult} />}
         </main>
       </div>
     </div>
