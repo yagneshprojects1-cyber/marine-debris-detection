@@ -10,15 +10,10 @@ export default function PageContent({
   aiApiBaseUrl,
   apiBaseUrl,
   detections,
-  selectedMapDetections = [],
   detectionResult,
   onDetectionComplete,
-  onShowHistoryDetection,
   onNavigate,
-  lastDetectionTime,
 }) {
-  const mapDetections = selectedMapDetections.length > 0 ? selectedMapDetections : detections;
-
   return (
     <>
       <div
@@ -35,11 +30,11 @@ export default function PageContent({
       </div>
 
       {activeTab === "maps" && (
-        <MapPage apiBaseUrl={apiBaseUrl} detectionPoints={mapDetections} />
+        <MapPage apiBaseUrl={apiBaseUrl} detectionPoints={detections} />
       )}
       {activeTab === "3d-map" && (
         <ThreeDMapPage
-          detections={mapDetections}
+          detections={detections}
           shipLatitude={detectionResult?.ship_latitude}
           shipLongitude={detectionResult?.ship_longitude}
           onNavigate={onNavigate}
@@ -51,13 +46,7 @@ export default function PageContent({
           imageUrl={detectionResult?.annotated_image_url}
         />
       )}
-      {activeTab === "history" && (
-        <HistoryPage
-          apiBaseUrl={apiBaseUrl}
-          lastDetectionTime={lastDetectionTime}
-          onShowHistoryDetection={onShowHistoryDetection}
-        />
-      )}
+      {activeTab === "history" && <HistoryPage apiBaseUrl={apiBaseUrl} />}
       {activeTab === "route-optimization" && (
         <RouteOptimizationPage apiBaseUrl={apiBaseUrl} />
       )}

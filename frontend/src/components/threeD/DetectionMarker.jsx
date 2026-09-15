@@ -122,7 +122,7 @@ function DepthGuide({ depth, objectPosition, rovPosition }) {
   );
 }
 
-export default function DetectionMarker({ detection, seabedDepth = 40, anchorX = 0, anchorZ = 0, rovPosition = [-18, -20, 0], onClick }) {
+export default function DetectionMarker({ detection, seabedDepth = 40, anchorX = 0, anchorZ = 0, rovPosition = [-18, -20, 0], isSelected = false, onClick }) {
   const [hovered, setHovered] = useState(false);
   const geoInfo = calculateObjectGeoPosition({
     sonarRange: detection.sonar_range,
@@ -159,7 +159,7 @@ export default function DetectionMarker({ detection, seabedDepth = 40, anchorX =
       }}
     >
       <group>
-        <DetectionObject3D detection={detection} scale={2.8} showLabel={false} />
+        <DetectionObject3D detection={detection} scale={1} showLabel={false} />
       </group>
       <DepthGuide
         depth={measurementDepth}
@@ -186,27 +186,31 @@ export default function DetectionMarker({ detection, seabedDepth = 40, anchorX =
         <cylinderGeometry args={[0.08, 0.08, 20, 8]} />
         <meshBasicMaterial color="#ffcf70" transparent opacity={0.8} depthTest={false} />
       </mesh>
-      <Text
-        position={[0, 21, 0]}
-        fontSize={2.2}
-        color="#ffe1a3"
-        anchorX="center"
-        anchorY="bottom"
-        outlineWidth={0.12}
-        outlineColor="#06283d"
-        depthOffset={-1}
-        lineHeight={1.2}
-      >
-        {`Lat: ${detection.latitude}\nLon: ${detection.longitude}`}
-      </Text>
+      {isSelected && (
+        <Text
+          position={[0, 21, 0]}
+          fontSize={2.2}
+          color="#b98b2a"
+          anchorX="center"
+          anchorY="bottom"
+          outlineWidth={0.12}
+          outlineColor="#06283d"
+          depthOffset={-1}
+          lineHeight={1.2}
+        >
+          {`Lat: ${detection.latitude}\nLon: ${detection.longitude}`}
+        </Text>
+      )}
       <mesh position={[12, 12, 0]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.14, 0.14, 24, 8]} />
         <meshBasicMaterial color="#ffd166" />
       </mesh>
 
-      <Text position={[24, 12, 0]} fontSize={5.5} color="#ffffff" anchorX="left" anchorY="middle" outlineWidth={0.35} outlineColor="#06283d" maxWidth={48}>
+      {isSelected && (
+        <Text position={[24, 12, 0]} fontSize={5.5} color="#ffd166" anchorX="left" anchorY="middle" outlineWidth={0.35} outlineColor="#06283d" maxWidth={48}>
           {detection.name || "Object"}
-      </Text>
+        </Text>
+      )}
     </group>
   );
 }

@@ -17,6 +17,7 @@ import React, { useState } from "react";
 export default function SidePanel({
   coordinates = null,       // { lat, lng } from map click
   detection = null,         // selected detected object from a marker click
+  detections = [],          // all detected objects for the object list
   placeName = "",            // reverse-geocoded name
   routeInfo = null,           // { waypoints: number, distance?: string }
   userLocation = null,        // { lat, lng } from GPS
@@ -28,8 +29,6 @@ export default function SidePanel({
   className = "",
   style = {},
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-
   /* ---- tiny helpers ---- */
   const copyToClipboard = (text) => {
     navigator.clipboard?.writeText(text);
@@ -42,8 +41,8 @@ export default function SidePanel({
     <div
       className={`side-panel ${className}`}
       style={{
-        width: collapsed ? 48 : "100%",
-        minWidth: collapsed ? 48 : 240,
+        width: "100%",
+        minWidth: 240,
         height: "100%",
         background: "linear-gradient(180deg, #0d1117 0%, #161b22 100%)",
         borderLeft: "1px solid #21262d",
@@ -67,76 +66,30 @@ export default function SidePanel({
           flexShrink: 0,
         }}
       >
-        {!collapsed && (
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 15,
-              fontWeight: 700,
-              letterSpacing: "0.02em",
-              color: "#e6edf3",
-            }}
-          >
-            Map Info & Optimization
-          </h2>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? "Expand panel" : "Collapse panel"}
+        <h2
           style={{
-            background: "none",
-            border: "1px solid #30363d",
-            borderRadius: 6,
-            color: "#8b949e",
-            cursor: "pointer",
-            padding: 4,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 28,
-            height: 28,
-            transition: "color 0.15s, border-color 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#e6edf3";
-            e.currentTarget.style.borderColor = "#8b949e";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#8b949e";
-            e.currentTarget.style.borderColor = "#30363d";
+            margin: 0,
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            color: "#e6edf3",
           }}
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{
-              transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.25s ease",
-            }}
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
+          Map Info & Optimization
+        </h2>
       </div>
 
       {/* ---- Scrollable Content ---- */}
-      {!collapsed && (
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-          }}
-        >
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+        }}
+      >
 
           {/* ======= SECTION: Coordinates ======= */}
           {(coordinates || showEmptyPlaceholders) && (
@@ -164,18 +117,23 @@ export default function SidePanel({
             </Section>
           )}
 
-          {/* ======= SECTION: Location Name ======= */}
-          {detection && (
-            <Section title="Detected Object" icon="target">
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Object</span>
-                <span style={styles.statValue}>{detection.objectName || "Object"}</span>
-              </div>
-              <div style={styles.statRow}>
-                <span style={styles.statLabel}>Confidence</span>
-                <span style={styles.statValue}>
-                  {(Number(detection.confidence || 0) * 100).toFixed(1)}%
-                </span>
+          {detections.length > 0 && (
+            <Section title={`Detected Objects (${detections.length})`} icon="target">
+              <div style={styles.detectionList}>
+                {detections.map((object, index) => (
+                  <div key={`${object.objectName || "object"}-${object.lat}-${object.lng}-${index}`} style={styles.detectionListItem}>
+                    <div style={styles.detectionListHeader}>
+                      <strong style={styles.detectionListName}>{object.objectName || `Object ${index + 1}`}</strong>
+                      <span style={styles.detectionListConfidence}>
+                        {(Number(object.confidence || 0) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div style={styles.detectionListCoordinates}>
+                      <span>Lat: {Number(object.lat).toFixed(6)}</span>
+                      <span>Lng: {Number(object.lng).toFixed(6)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </Section>
           )}
@@ -247,8 +205,7 @@ export default function SidePanel({
 
           {/* ======= SLOT: extra content from parent ======= */}
           {children}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -387,6 +344,46 @@ const styles = {
     borderTopColor: "#4285F4",
     borderRadius: "50%",
     animation: "spin 0.8s linear infinite",
+  },
+  detectionList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  detectionListItem: {
+    padding: "9px 10px",
+    border: "1px solid #21262d",
+    borderRadius: 6,
+    background: "rgba(255, 255, 255, 0.025)",
+  },
+  detectionListHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  detectionListName: {
+    minWidth: 0,
+    overflow: "hidden",
+    color: "#e6edf3",
+    fontSize: 13,
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  detectionListConfidence: {
+    flexShrink: 0,
+    color: "#ffd166",
+    fontSize: 11,
+    fontWeight: 700,
+  },
+  detectionListCoordinates: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+    marginTop: 5,
+    color: "#8b949e",
+    fontFamily: "'SF Mono', 'Fira Code', monospace",
+    fontSize: 11,
   },
   statRow: {
     display: "flex",

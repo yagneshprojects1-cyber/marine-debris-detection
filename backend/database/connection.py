@@ -13,9 +13,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.database import Database
 
-BACKEND_DIR = Path(__file__).resolve().parents[1]
-load_dotenv(BACKEND_DIR / "env")
-load_dotenv(BACKEND_DIR / ".env", override=True)
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 
 try:
@@ -37,17 +35,19 @@ def get_client() -> MongoClient:
         "serverSelectionTimeoutMS": int(os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT_MS", "5000")),
     }
 
+    if ca_file:
+        kwargs["tlsCAFile"] = ca_file
+
+    # Bypass SSL handshake verification errors in development/hackathon environments
     if os.getenv("MONGODB_ALLOW_INVALID_CERTS", "true").lower() == "true":
         kwargs["tlsAllowInvalidCertificates"] = True
-    elif ca_file:
-        kwargs["tlsCAFile"] = ca_file
 
     return MongoClient(uri, **kwargs)
 
 
 def get_database() -> Database[Any]:
-    """Return the configured database, defaulting to marinedb."""
-    database_name = os.getenv("MONGODB_DATABASE", "marinedb")
+    """Return the configured database, defaulting to debris_detector."""
+    database_name = os.getenv("MONGODB_DATABASE", "debris_detector")
     return get_client()[database_name]
 
 

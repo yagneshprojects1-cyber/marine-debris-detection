@@ -10,9 +10,7 @@ function App() {
   const [detections, setDetections] = useState([]);
   const [databaseDetections, setDatabaseDetections] = useState([]);
   const [detectionResult, setDetectionResult] = useState(null);
-  const [selectedMapDetections, setSelectedMapDetections] = useState([]);
   const [showAnalysisToast, setShowAnalysisToast] = useState(false);
-  const [lastDetectionTime, setLastDetectionTime] = useState(0);
 
   const loadMapData = () => {
     return fetch(`${API_BASE_URL}/api/map-data`)
@@ -34,28 +32,8 @@ function App() {
   const handleDetectionComplete = (result) => {
     setDetectionResult(result);
     setDetections(result?.objects_detected || []);
-    setSelectedMapDetections([]);
     loadMapData();
     setShowAnalysisToast(Boolean(result));
-    if (result) setLastDetectionTime(Date.now());
-  };
-
-  const handleShowHistoryDetection = (item, targetTab) => {
-    const detection = {
-      ...item,
-      name: item.object,
-      confidence: Number(item.confidence),
-      latitude: item.latitude,
-      longitude: item.longitude,
-    };
-
-    setSelectedMapDetections([detection]);
-    setDetectionResult((current) => ({
-      ...current,
-      ship_latitude: item.latitude,
-      ship_longitude: item.longitude,
-    }));
-    setActiveTab(targetTab);
   };
 
   useEffect(() => {
@@ -87,12 +65,9 @@ function App() {
           aiApiBaseUrl={AI_API_BASE_URL}
           apiBaseUrl={API_BASE_URL}
           detections={databaseDetections}
-          selectedMapDetections={selectedMapDetections}
           detectionResult={detectionResult}
           onDetectionComplete={handleDetectionComplete}
-          onShowHistoryDetection={handleShowHistoryDetection}
           onNavigate={setActiveTab}
-          lastDetectionTime={lastDetectionTime}
         />
       </div>
       {showAnalysisToast && (

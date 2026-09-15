@@ -1,27 +1,31 @@
 import * as THREE from "three";
 
 function terrainWave(x, z) {
-  const broadShape = Math.sin(x / 100) * 12 + Math.cos(z / 100) * 12;
-  const ridges = Math.sin((x + z) / 50) * 5;
-  const smallUndulation = Math.sin(x / 19) * 1.8 + Math.cos(z / 27) * 1.4;
-  return broadShape + ridges + smallUndulation;
+  const gentleSwell = Math.sin(x / 45) * 1.6 + Math.cos(z / 50) * 1.6;
+  const crossSwell = Math.sin((x + z) / 28) * 0.9;
+  const microRipples = Math.sin(x / 14) * 0.4 + Math.cos(z / 16) * 0.4;
+  return gentleSwell + crossSwell + microRipples;
 }
 
 export function getTerrainY(x, z, anchorX, anchorZ, anchorDepth) {
   const anchorWave = terrainWave(anchorX, anchorZ);
-  const relativeWave = (terrainWave(x, z) - anchorWave) * 0.35;
-  return Math.min(-0.5, -anchorDepth + relativeWave);
+  const relativeWave = terrainWave(x, z) - anchorWave;
+  const seabedRelief = relativeWave;
+  const depthBase = -anchorDepth;
+  return depthBase + seabedRelief;
 }
 
 export function createTerrainGeometry(anchorX, anchorZ, anchorDepth) {
-  const geometry = new THREE.PlaneGeometry(500, 500, 100, 100);
+  const geometry = new THREE.PlaneGeometry(500, 500, 120, 120);
   geometry.rotateX(-Math.PI / 2);
 
   const positions = geometry.attributes.position.array;
   for (let index = 0; index < positions.length; index += 3) {
+    const x = positions[index];
+    const z = positions[index + 2];
     positions[index + 1] = getTerrainY(
-      positions[index],
-      positions[index + 2],
+      x,
+      z,
       anchorX,
       anchorZ,
       anchorDepth,

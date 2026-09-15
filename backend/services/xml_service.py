@@ -48,9 +48,6 @@ def parse_annotation(xml_path: Path) -> dict[str, Any]:
             raise ValueError("XML bounding-box values must be integers.") from exc
         objects.append({"name": name, "bndbox": bbox})
 
-    # Images with no annotated objects are valid — the YOLO model may still detect
-    # debris, and a "no detections" result is a legitimate outcome worth storing.
-
     file_node = root.find("file")
     return {
         "sonar": sonar_data,

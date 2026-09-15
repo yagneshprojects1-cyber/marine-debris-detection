@@ -51,6 +51,30 @@ const Navbar = ({
         {renderLockedAction(
           <button
             type="button"
+            onClick={() => onNavigate("maps")}
+            aria-current={activeTab === "maps" ? "page" : undefined}
+            className={`navbar-tab${activeTab === "maps" ? " active" : ""}`}
+            disabled={!hasDetections}
+          >
+            Show Object on Map
+          </button>
+        )}
+
+        {renderLockedAction(
+          <button
+            type="button"
+            onClick={() => onNavigate("3d-map")}
+            aria-current={activeTab === "3d-map" ? "page" : undefined}
+            className={`navbar-tab${activeTab === "3d-map" ? " active" : ""}`}
+            disabled={!hasDetections}
+          >
+            Show in 3D Map
+          </button>
+        )}
+
+        {renderLockedAction(
+          <button
+            type="button"
             className={`navbar-tab${activeTab === "report" ? " active" : ""}`}
             style={{ marginLeft: "auto" }}
             onClick={onGenerateReport}

@@ -9,7 +9,7 @@ import { AI_API_BASE_URL } from '../config/api';
  */
 const MODEL_BASE_URL = AI_API_BASE_URL.replace(/\/$/, '');
 // Bump this value whenever a GLB is replaced so Drei/browser caches fetch the new asset.
-const MODEL_ASSET_VERSION = '20260906-plane-v3';
+const MODEL_ASSET_VERSION = '20260910-detection-models-v2';
 const modelUrl = (filename) => `${MODEL_BASE_URL}/3dmodels/${encodeURIComponent(filename)}?v=${MODEL_ASSET_VERSION}`;
 const MODEL_MAP = {
   'human body': modelUrl('human body.glb'),
@@ -18,6 +18,11 @@ const MODEL_MAP = {
   'ship wreck': modelUrl('ship.glb'),
   'plane wreck': modelUrl('plane.glb'),
   'plane': modelUrl('plane.glb'),
+  'ball': modelUrl('ball.glb'),
+  'square cage': modelUrl('square cage.glb'),
+  'cage': modelUrl('square cage.glb'),
+  'tyre': modelUrl('tyre.glb'),
+  'tire': modelUrl('tyre.glb'),
   'wreck': modelUrl('ship.glb'),
   'net': modelUrl('ghost net.glb'),
 };
@@ -84,6 +89,11 @@ const MODEL_TARGET_SIZE = {
   'wreck': 32,
   'plane': 12,
   'plane wreck': 12,
+  'ball': 5,
+  'square cage': 12,
+  'cage': 12,
+  'tyre': 10,
+  'tire': 10,
   rov: 24,
 };
 

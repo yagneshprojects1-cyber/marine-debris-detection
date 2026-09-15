@@ -177,7 +177,7 @@
 
 .history-table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 940px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -196,32 +196,6 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-
-.th-sortable {
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-}
-
-.th-sortable:hover {
-  color: #b8f0e8;
-}
-
-.sort-arrow {
-  display: inline-block;
-  margin-left: 5px;
-  font-size: 11px;
-  vertical-align: middle;
-}
-
-.sort-arrow--idle {
-  opacity: 0.35;
-}
-
-.sort-arrow--active {
-  color: #70d5ca;
-  opacity: 1;
 }
 
 .history-table td {
@@ -266,133 +240,10 @@
   font-weight: 600;
 }
 
-.history-map-button {
-  min-width: 124px;
-  padding: 8px 10px;
-  border: 1px solid rgba(112, 213, 202, 0.34);
-  border-radius: 7px;
-  background: rgba(112, 213, 202, 0.1);
-  color: #b8f0e8;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.history-map-button-3d {
-  border-color: rgba(255, 209, 102, 0.38);
-  background: rgba(255, 209, 102, 0.1);
-  color: #ffe1a3;
-}
-
-.history-map-button:hover:not(:disabled) {
-  background: rgba(112, 213, 202, 0.18);
-}
-
-.history-map-button-3d:hover:not(:disabled) {
-  background: rgba(255, 209, 102, 0.18);
-}
-
-.history-map-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
 .history-mono {
   font-family: "SF Mono", "Fira Code", Consolas, monospace;
   color: #a7c0c1 !important;
   font-size: 12px;
-}
-
-/* ── Checkbox column ──────────────────────────────────────── */
-.th-check,
-.td-check {
-  width: 36px;
-  padding: 14px 0 14px 16px !important;
-}
-
-.history-checkbox {
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-  accent-color: #70d5ca;
-}
-
-/* ── Selected row highlight ───────────────────────────────── */
-.history-row--selected {
-  background: rgba(112, 213, 202, 0.08) !important;
-}
-
-/* ── Delete action bar ────────────────────────────────────── */
-.history-delete-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-  padding: 10px 16px;
-  border: 1px solid rgba(218, 54, 51, 0.35);
-  border-radius: 8px;
-  background: rgba(45, 21, 25, 0.7);
-}
-
-.history-delete-count {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffa0a0;
-  margin-right: auto;
-}
-
-.history-delete-err {
-  font-size: 12px;
-  color: #f0883e;
-}
-
-.history-delete-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border: 1px solid rgba(218, 54, 51, 0.6);
-  border-radius: 7px;
-  background: rgba(218, 54, 51, 0.18);
-  color: #ff7b7b;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.history-delete-btn:hover:not(:disabled) {
-  background: rgba(218, 54, 51, 0.32);
-}
-
-.history-delete-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.history-deselect-btn {
-  padding: 8px 14px;
-  border: 1px solid #31484d;
-  border-radius: 7px;
-  background: transparent;
-  color: #8ba4a7;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.history-deselect-btn:hover:not(:disabled) {
-  background: rgba(112, 213, 202, 0.08);
-  color: #b8f0e8;
-}
-
-.history-deselect-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 @media (max-width: 720px) {
