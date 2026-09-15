@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<annotation>
+    <sonar>
+        <range>24.9909</range>
+        <azimuth>120</azimuth>
+        <elevation>12</elevation>
+        <soundspeed>1498.1</soundspeed>
+        <frequency>1200k</frequency>
+    </sonar>
+    <file>
+        <folder>UATD_Test_2</folder>
+        <filename>00002</filename>
+    </file>
+    <size>
+        <width>1024</width>
+        <height>1257</height>
+        <channel>3</channel>
+    </size>
+    <object>
+        <name>rov</name>
+        <bndbox>
+            <xmin>534</xmin>
+            <ymin>933</ymin>
+            <xmax>586</xmax>
+            <ymax>972</ymax>
+        </bndbox>
+    </object>
+</annotation>

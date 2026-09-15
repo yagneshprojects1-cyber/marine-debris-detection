@@ -1,0 +1,15 @@
+path: /kaggle/working/dataset
+train: images/train
+val: images/val
+
+names:
+  0: 'ball'
+  1: 'cube'
+  2: 'human body'
+  3: 'tyre'
+  4: 'plane'
+  5: 'rov'
+  6: 'square cage'
+  7: 'circle cage'
+  8: 'cylinder'
+  9: 'metal bucket'

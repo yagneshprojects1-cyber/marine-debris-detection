@@ -1,0 +1,10 @@
+id,name,latitude,longitude,water_body,description
+d1,Ghost Net #1,18.95,72.8,Arabian Sea,Entangled fishing net near Mumbai coast
+d2,Ship Wreck #1,18.98,72.75,Arabian Sea,Submerged vessel wreckage
+d3,Plane Wreck,18.91,72.72,Arabian Sea,Aircraft hull fragment
+d4,Plastic Debris Patch #1,18.85,72.78,Arabian Sea,High density floating macroplastics
+d5,Ghost Net #2,18.82,72.85,Arabian Sea,Derelict fishing gear near Alibag
+d6,Submerged Container,18.75,72.7,Arabian Sea,Lost cargo shipping container
+d7,Ship Wreck #2,18.9,72.65,Arabian Sea,Historic wreck site in deep waters
+d8,Debris Cluster #1,19.05,72.7,Arabian Sea,Mixed marine debris field
+d9,Ghost Net #3,19.1,72.75,Arabian Sea,Ghost net in northwest channel

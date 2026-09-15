@@ -1,0 +1,108 @@
+.map-component {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+}
+
+.map-coordinates,
+.route-info-badge,
+.my-location-button {
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.map-coordinates {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  max-width: min(360px, calc(100% - 20px));
+  padding: 8px 10px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #333;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.route-info-badge {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.my-location-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.my-location-button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.my-location-button:disabled {
+  background-color: #e0e0e0;
+  cursor: wait;
+  transform: scale(0.9);
+}
+
+.location-loader {
+  animation: map-component-spin 1s linear infinite;
+}
+
+.route-label-tooltip {
+  background: rgba(33, 33, 33, 0.85) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.route-label-tooltip::before {
+  border-top-color: rgba(33, 33, 33, 0.85) !important;
+}
+
+@keyframes map-component-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .route-info-badge {
+    left: 10px;
+    right: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transform: none;
+  }
+}
