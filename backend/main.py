@@ -25,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 import config
-from routers import detection, history, map_data, positions, preprocessing, reports, route_planning, stats
+from routers import admin, detection, history, map_data, positions, preprocessing, reports, route_planning, stats
 from roles import router as roles_router
 
 app = FastAPI(
@@ -49,6 +49,7 @@ app.mount("/media", StaticFiles(directory=str(config.DATA_DIR)), name="media")
 app.mount("/3dmodels", StaticFiles(directory=str(config.THREE_D_MODELS_DIR)), name="3dmodels")
 
 # ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(admin.router)
 app.include_router(preprocessing.router)
 app.include_router(detection.router)
 app.include_router(reports.router)

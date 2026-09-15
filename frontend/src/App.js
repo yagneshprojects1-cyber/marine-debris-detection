@@ -4,6 +4,7 @@ import Navbar from './pages/navbar';
 import PageContent from './pages/PageContent';
 import RoleSelectionPage from './roles/RoleSelectionPage';
 import RoleLandingPage from './roles/RoleLandingPage';
+import SystemAdminWorkspace from './roles/system-admin/SystemAdminWorkspace';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
 
 function App() {
@@ -92,6 +93,7 @@ function App() {
   }
 
   const isSonarAnalyst = selectedRole === "Sonar Analyst";
+  const isSystemAdmin = selectedRole === "System Administrator";
 
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -113,6 +115,12 @@ function App() {
             onDetectionComplete={handleDetectionComplete}
             onNavigate={setActiveTab}
             onGenerateReport={handleGenerateReport}
+          />
+        ) : isSystemAdmin ? (
+          <SystemAdminWorkspace
+            apiBaseUrl={API_BASE_URL}
+            activeAdminTab={activeTab}
+            onNavigateTab={setActiveTab}
           />
         ) : (
           <RoleLandingPage role={selectedRole} />
