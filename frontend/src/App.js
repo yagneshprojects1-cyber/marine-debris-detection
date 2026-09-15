@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import './App.css';
 import Navbar from './pages/navbar';
 import PageContent from './pages/PageContent';
+import RoleSelectionPage from './pages/RoleSelectionPage';
+import RoleLandingPage from './pages/RoleLandingPage';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
 
 function App() {
+  const [selectedRole, setSelectedRole] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [detections, setDetections] = useState([]);
   const [databaseDetections, setDatabaseDetections] = useState([]);
@@ -72,24 +75,48 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role);
+    setActiveTab("dashboard");
+  };
+
+  const handleLogout = () => {
+    setSelectedRole(null);
+    setDetectionResult(null);
+    setDetections([]);
+    setActiveTab("dashboard");
+  };
+
+  if (!selectedRole) {
+    return <RoleSelectionPage onRoleSelect={handleRoleSelect} />;
+  }
+
+  const isSonarAnalyst = selectedRole === "Sonar Analyst";
+
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <Navbar
         activeTab={activeTab}
         onNavigate={setActiveTab}
+        role={selectedRole}
+        onLogout={handleLogout}
       />
       {/* Scrollable page area: every tab can grow and scroll here */}
       <div style={{ flex: 1, overflowY: "auto" }}>
-        <PageContent
-          activeTab={activeTab}
-          aiApiBaseUrl={AI_API_BASE_URL}
-          apiBaseUrl={API_BASE_URL}
-          detections={databaseDetections}
-          detectionResult={detectionResult}
-          onDetectionComplete={handleDetectionComplete}
-          onNavigate={setActiveTab}
-          onGenerateReport={handleGenerateReport}
-        />
+        {isSonarAnalyst ? (
+          <PageContent
+            activeTab={activeTab}
+            aiApiBaseUrl={AI_API_BASE_URL}
+            apiBaseUrl={API_BASE_URL}
+            detections={databaseDetections}
+            detectionResult={detectionResult}
+            onDetectionComplete={handleDetectionComplete}
+            onNavigate={setActiveTab}
+            onGenerateReport={handleGenerateReport}
+          />
+        ) : (
+          <RoleLandingPage role={selectedRole} />
+        )}
       </div>
       {showAnalysisToast && (
         <div className="analysis-toast" role="status" aria-live="polite">

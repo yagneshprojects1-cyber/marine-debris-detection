@@ -3,9 +3,20 @@ import "./navbar.css";
 const Navbar = ({
   activeTab,
   onNavigate,
+  role,
+  onLogout,
 }) => {
   return (
     <nav className="main-navbar" aria-label="Main navigation">
+      <span className="navbar-role" aria-label={`Signed in as ${role}`}>
+        {role}
+      </span>
+
+      {role !== "Sonar Analyst" && (
+        <span className="navbar-role-label">Role workspace</span>
+      )}
+
+      {role === "Sonar Analyst" && <>
       <button
         type="button"
         onClick={() => onNavigate("dashboard")}
@@ -31,6 +42,11 @@ const Navbar = ({
         className={`navbar-tab${activeTab === "route-optimization" ? " active" : ""}`}
       >
         Route Optimization
+      </button>
+      </>}
+
+      <button type="button" className="navbar-action" onClick={onLogout}>
+        Logout
       </button>
     </nav>
   );

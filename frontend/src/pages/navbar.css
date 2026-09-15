@@ -9,6 +9,18 @@
   box-sizing: border-box;
 }
 
+.navbar-role {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.navbar-role-label {
+  color: #6b7280;
+  font-size: 13px;
+}
+
 .navbar-action {
   height: 40px;
   margin-left: auto;
@@ -106,6 +118,16 @@
   .navbar-tab, .navbar-action {
     padding: 0 8px;
     font-size: 13px;
+  }
+
+  .navbar-role {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .navbar-role-label {
+    display: none;
   }
 
   .navbar-tab-tooltip {
