@@ -26,7 +26,7 @@ from fastapi.staticfiles import StaticFiles
 
 import config
 from auth_router import router as auth_router, seed_default_users
-from routers import detection, history, map_data, positions, preprocessing, reports, route_planning, stats
+from routers import admin, detection, history, map_data, positions, preprocessing, reports, route_planning, stats
 from roles import router as roles_router
 
 app = FastAPI(
@@ -53,6 +53,7 @@ app.mount("/3dmodels", StaticFiles(directory=str(config.THREE_D_MODELS_DIR)), na
 seed_default_users()
 
 # ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(admin.router)
 app.include_router(preprocessing.router)
 app.include_router(detection.router)
 app.include_router(reports.router)

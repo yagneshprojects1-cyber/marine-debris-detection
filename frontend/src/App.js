@@ -5,6 +5,7 @@ import PageContent from './pages/PageContent';
 import RoleLandingPage from './roles/RoleLandingPage';
 import ManagerDashboard from './roles/manager/ManagerDashboard';
 import OperatorDashboard from './roles/operator/OperatorDashboard';
+import SystemAdminWorkspace from './roles/system-admin/SystemAdminWorkspace';
 import AuthPage from './AuthPage';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
 
@@ -110,6 +111,7 @@ function App() {
   const isSonarAnalyst = selectedRole === "Sonar Analyst";
   const isManager = selectedRole === "Supervisor / Manager";
   const isOperator = selectedRole === "Marine Debris Removal Operator";
+  const isSystemAdmin = selectedRole === "System Administrator";
 
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -139,6 +141,12 @@ function App() {
         ) : isOperator ? (
           <OperatorDashboard
             activeTab={activeTab}
+          />
+        ) : isSystemAdmin ? (
+          <SystemAdminWorkspace
+            apiBaseUrl={API_BASE_URL}
+            activeAdminTab={activeTab}
+            onNavigateTab={setActiveTab}
           />
         ) : (
           <RoleLandingPage role={selectedRole} />
