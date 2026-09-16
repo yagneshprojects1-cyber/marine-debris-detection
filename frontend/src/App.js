@@ -133,6 +133,7 @@ function App() {
             onDetectionComplete={handleDetectionComplete}
             onNavigate={setActiveTab}
             onGenerateReport={handleGenerateReport}
+            analystName={user?.username}
           />
         ) : isManager ? (
           <ManagerDashboard
@@ -141,6 +142,7 @@ function App() {
         ) : isOperator ? (
           <OperatorDashboard
             activeTab={activeTab}
+            username={user?.username}
           />
         ) : isSystemAdmin ? (
           <SystemAdminWorkspace

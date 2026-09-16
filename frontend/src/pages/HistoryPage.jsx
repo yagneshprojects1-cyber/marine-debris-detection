@@ -34,7 +34,7 @@ const getPageNumbers = (currentPage, totalPages) => {
   return [1, "ellipsis-start", currentPage - 1, currentPage, currentPage + 1, "ellipsis-end", totalPages];
 };
 
-export default function HistoryPage({ apiBaseUrl }) {
+export default function HistoryPage({ apiBaseUrl, includeAllocationDetails = false }) {
   const [historyItems, setHistoryItems] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
@@ -116,12 +116,7 @@ export default function HistoryPage({ apiBaseUrl }) {
           sonar_elevation: 0,
           sonar_soundspeed: 1500,
           sonar_frequency: 0,
-          bndbox: {
-            xmin: 0,
-            ymin: 0,
-            xmax: 0,
-            ymax: 0,
-          },
+          bndbox: { xmin: 0, ymin: 0, xmax: 0, ymax: 0 },
         }],
       }
     : null;
@@ -170,13 +165,7 @@ export default function HistoryPage({ apiBaseUrl }) {
               }}
             />
           </label>
-          <button
-            type="button"
-            className="history-refresh"
-            onClick={() => setRefreshToken((token) => token + 1)}
-            disabled={loading}
-            title="Refresh detection history"
-          >
+          <button type="button" className="history-refresh" onClick={() => setRefreshToken((token) => token + 1)} disabled={loading} title="Refresh detection history">
             <span aria-hidden="true">↻</span>
             {loading ? "Refreshing..." : "Refresh"}
           </button>
@@ -196,40 +185,27 @@ export default function HistoryPage({ apiBaseUrl }) {
               <col className="history-col-bounding-box" />
               <col className="history-col-id" />
               <col className="history-col-image" />
+              <col className="history-col-status" />
+              {includeAllocationDetails && <col className="history-col-group" />}
+              {includeAllocationDetails && <col className="history-col-operators" />}
+              {includeAllocationDetails && <col className="history-col-checker" />}
             </colgroup>
             <thead>
               <tr>
-                <th>S.No.</th>
-                <th>Details</th>
-                <th>Object</th>
-                <th>Confidence</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
-                <th>Date</th>
-                <th>Timestamp</th>
-                <th>Bounding Box (xmin, ymin - xmax, ymax)</th>
-                <th>Image ID</th>
-                <th>Image Name</th>
+                <th>S.No.</th><th>Details</th><th>Object</th><th>Confidence</th><th>Latitude</th><th>Longitude</th>
+                <th>Date</th><th>Timestamp</th><th>Bounding Box (xmin, ymin - xmax, ymax)</th><th>Image ID</th><th>Image Name</th>
+                <th>Status</th>
+                {includeAllocationDetails && <><th>Group</th><th>Allocated Operators</th><th>Debris Checker</th></>}
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td className="history-empty" colSpan="11">Loading database history...</td></tr>}
-              {!loading && error && <tr><td className="history-empty history-error" colSpan="11">{error}</td></tr>}
-              {!loading && !error && visibleItems.length === 0 && (
-                <tr><td className="history-empty" colSpan="11">No uploaded image detections found.</td></tr>
-              )}
+              {loading && <tr><td className="history-empty" colSpan={includeAllocationDetails ? 15 : 12}>Loading database history...</td></tr>}
+              {!loading && error && <tr><td className="history-empty history-error" colSpan={includeAllocationDetails ? 15 : 12}>{error}</td></tr>}
+              {!loading && !error && visibleItems.length === 0 && <tr><td className="history-empty" colSpan={includeAllocationDetails ? 15 : 12}>No uploaded image detections found.</td></tr>}
               {!loading && !error && paginatedItems.map((item, index) => (
                 <tr key={item.predicted_id || `${item.image_id}-${item.object}-${item.timestamp}-${index}`}>
                   <td className="history-serial">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="history-detail-button"
-                      onClick={() => handleGetDetails(item)}
-                    >
-                      Get Details
-                    </button>
-                  </td>
+                  <td><button type="button" className="history-detail-button" onClick={() => handleGetDetails(item)}>Get Details</button></td>
                   <td>{item.object}</td>
                   <td><span className="history-confidence">{(Number(item.confidence || 0) * 100).toFixed(1)}%</span></td>
                   <td className="history-mono">{formatCoordinate(item.latitude)}</td>
@@ -238,11 +214,15 @@ export default function HistoryPage({ apiBaseUrl }) {
                   <td className="history-mono">{formatTime(item.timestamp)}</td>
                   <td className="history-mono">{formatBoundingBox(item.bounding_box)}</td>
                   <td className="history-mono history-id">{item.image_id || "-"}</td>
-                  <td>
-                    <div className="history-row-actions">
-                      <span>{item.image_name || "-"}</span>
-                    </div>
-                  </td>
+                  <td><div className="history-row-actions"><span>{item.image_name || "-"}</span></div></td>
+                  <td><span className={`history-status-badge status-${(item.status || "Validated").toLowerCase().replace(/\s+/g, "-")}`}>{item.status || "Validated"}</span></td>
+                  {includeAllocationDetails && (
+                    <>
+                      <td className="history-mono">{item.group_id || "-"}</td>
+                      <td>{item.allocated_operators?.length ? item.allocated_operators.join(", ") : "-"}</td>
+                      <td>{item.analyst_name || "Sonar Analyst"}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -251,98 +231,31 @@ export default function HistoryPage({ apiBaseUrl }) {
 
         {visibleItems.length > 0 && totalPages > 1 && (
           <nav className="history-pagination" aria-label="Detection history pages">
-            <button
-              type="button"
-              className="history-page-button history-page-arrow"
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              disabled={currentPage === 1}
-              aria-label="Previous page"
-            >
-              &#8249; Previous
-            </button>
-            {pageNumbers.map((page, idx) => (
-              typeof page === "string" && page.startsWith("ellipsis") ? (
-                <span key={`ellipsis-${idx}`} className="history-page-ellipsis" aria-hidden="true">...</span>
-              ) : (
-                <button
-                  key={page}
-                  type="button"
-                  className={`history-page-button${currentPage === page ? " active" : ""}`}
-                  onClick={() => setCurrentPage(page)}
-                  aria-current={currentPage === page ? "page" : undefined}
-                >
-                  {page}
-                </button>
-              )
+            <button type="button" className="history-page-button history-page-arrow" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} aria-label="Previous page">&#8249; Previous</button>
+            {pageNumbers.map((page, idx) => typeof page === "string" && page.startsWith("ellipsis") ? (
+              <span key={`ellipsis-${idx}`} className="history-page-ellipsis" aria-hidden="true">...</span>
+            ) : (
+              <button key={page} type="button" className={`history-page-button${currentPage === page ? " active" : ""}`} onClick={() => setCurrentPage(page)} aria-current={currentPage === page ? "page" : undefined}>{page}</button>
             ))}
-            <button
-              type="button"
-              className="history-page-button history-page-arrow"
-              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-              disabled={currentPage === totalPages}
-              aria-label="Next page"
-            >
-              Next &#8250;
-            </button>
+            <button type="button" className="history-page-button history-page-arrow" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} aria-label="Next page">Next &#8250;</button>
           </nav>
         )}
 
         {selectedDetail && (
           <section className="history-detail-panel" aria-label="Selected history item details">
             <div className="history-detail-header">
-              <div>
-                <span className="history-detail-eyebrow">Selected history record</span>
-                <h2>{selectedHistoryItem.object}</h2>
-              </div>
-              <button
-                type="button"
-                className="history-detail-close"
-                onClick={() => setSelectedHistoryItem(null)}
-              >
-                <span aria-hidden="true">←</span>
-                <span>Back</span>
-              </button>
+              <div><span className="history-detail-eyebrow">Selected history record</span><h2>{selectedHistoryItem.object}</h2></div>
+              <button type="button" className="history-detail-close" onClick={() => setSelectedHistoryItem(null)}><span aria-hidden="true">←</span><span>Back</span></button>
             </div>
-
             <div className="history-detail-tabs" role="tablist" aria-label="History item views">
-              {[
-                { id: "results", label: "Detection Results" },
-                { id: "2d", label: "2D Map" },
-                { id: "3d", label: "3D Map" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={historyDetailView === tab.id}
-                  className={historyDetailView === tab.id ? "active" : ""}
-                  onClick={() => setHistoryDetailView(tab.id)}
-                >
-                  {tab.label}
-                </button>
+              {[{ id: "results", label: "Detection Results" }, { id: "2d", label: "2D Map" }, { id: "3d", label: "3D Map" }].map((tab) => (
+                <button key={tab.id} type="button" role="tab" aria-selected={historyDetailView === tab.id} className={historyDetailView === tab.id ? "active" : ""} onClick={() => setHistoryDetailView(tab.id)}>{tab.label}</button>
               ))}
             </div>
-
             <div className="history-detail-content">
               {historyDetailView === "results" && <DetectionResults detectionResult={selectedDetail} />}
-              {historyDetailView === "2d" && (
-                <div className="history-detail-map">
-                  <MapPage
-                    apiBaseUrl={apiBaseUrl}
-                    detectionPoints={selectedDetail.objects_detected}
-                    detectionResult={selectedDetail}
-                  />
-                </div>
-              )}
-              {historyDetailView === "3d" && (
-                <div className="history-detail-map">
-                  <ThreeDMapPage
-                    detections={selectedDetail.objects_detected}
-                    shipLatitude={selectedDetail.ship_latitude}
-                    shipLongitude={selectedDetail.ship_longitude}
-                  />
-                </div>
-              )}
+              {historyDetailView === "2d" && <div className="history-detail-map"><MapPage apiBaseUrl={apiBaseUrl} detectionPoints={selectedDetail.objects_detected} detectionResult={selectedDetail} /></div>}
+              {historyDetailView === "3d" && <div className="history-detail-map"><ThreeDMapPage detections={selectedDetail.objects_detected} shipLatitude={selectedDetail.ship_latitude} shipLongitude={selectedDetail.ship_longitude} /></div>}
             </div>
           </section>
         )}

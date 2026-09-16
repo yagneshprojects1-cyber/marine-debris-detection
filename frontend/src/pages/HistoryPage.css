@@ -194,6 +194,10 @@
 .history-col-bounding-box { width: 245px; }
 .history-col-id { width: 220px; }
 .history-col-image { width: 240px; }
+.history-col-status { width: 150px; }
+.history-col-group { width: 130px; }
+.history-col-operators { width: 220px; }
+.history-col-checker { width: 190px; }
 
 .history-table-scroll {
   max-width: 100%;
@@ -236,6 +240,18 @@
 .history-error {
   color: #ff9c91 !important;
 }
+
+.history-status-badge {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: rgba(34, 211, 238, 0.14);
+  color: #67e8f9;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: normal;
+}
+
 
 .history-id {
   overflow: hidden;

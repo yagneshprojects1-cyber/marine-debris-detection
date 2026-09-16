@@ -1,6 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export default function AnalystSurveysList({ surveys, onSelectSurvey, selectedSurveyId }) {
+const getPageNumbers = (currentPage, totalPages) => {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
+  if (currentPage <= 4) return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+  if (currentPage >= totalPages - 3) {
+    return [1, "ellipsis-start", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, "ellipsis-start", currentPage - 1, currentPage, currentPage + 1, "ellipsis-end", totalPages];
+};
+
+export default function AnalystSurveysList({ surveys = [], validatedDetections = 0, onSelectSurvey, selectedSurveyId, isLoading, error }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,8 +29,13 @@ export default function AnalystSurveysList({ surveys, onSelectSurvey, selectedSu
   });
 
   const totalPages = Math.ceil(filteredSurveys.length / itemsPerPage) || 1;
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedSurveys = filteredSurveys.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -29,11 +43,15 @@ export default function AnalystSurveysList({ surveys, onSelectSurvey, selectedSu
         return <span className="status-badge badge-validated">Validated</span>;
       case "Assigned for Removal":
         return <span className="status-badge badge-assigned">Assigned for Removal</span>;
+      case "Allocated for Removal":
+        return <span className="status-badge badge-assigned">Allocated for Removal</span>;
+      case "Approved":
+        return <span className="status-badge badge-approved">Approved</span>;
       case "Completed":
         return <span className="status-badge badge-completed">Completed</span>;
       case "Pending Review":
       default:
-        return <span className="status-badge badge-pending">Pending Review</span>;
+        return <span className="status-badge badge-pending">{status || "Pending Review"}</span>;
     }
   };
 
@@ -47,7 +65,7 @@ export default function AnalystSurveysList({ surveys, onSelectSurvey, selectedSu
           </p>
         </div>
         <div className="surveys-count-badge">
-          {filteredSurveys.length} {filteredSurveys.length === 1 ? "Survey" : "Surveys"} Listed
+          {filteredSurveys.length} Surveys / {validatedDetections} Validated debris
         </div>
       </div>
 
@@ -72,14 +90,21 @@ export default function AnalystSurveysList({ surveys, onSelectSurvey, selectedSu
           }}
         >
           <option value="all">All Survey Statuses</option>
-          <option value="Pending Review">⏳ Pending Review</option>
           <option value="Validated">✅ Validated</option>
-          <option value="Assigned for Removal">⚓ Assigned for Removal</option>
-          <option value="Completed">🌊 Completed</option>
+          <option value="Approved">✅ Approved</option>
+          <option value="Allocated for Removal">⚓ Allocated for Removal</option>
         </select>
       </div>
 
-      {paginatedSurveys.length === 0 ? (
+      {isLoading ? (
+        <div className="empty-surveys-box">
+          <p>Loading analyst surveys from the database...</p>
+        </div>
+      ) : error ? (
+        <div className="empty-surveys-box">
+          <p>{error}</p>
+        </div>
+      ) : paginatedSurveys.length === 0 ? (
         <div className="empty-surveys-box">
           <p>No analyst surveys match your filter criteria or no sonar images have been uploaded yet.</p>
         </div>
@@ -156,27 +181,41 @@ export default function AnalystSurveysList({ surveys, onSelectSurvey, selectedSu
 
       {/* Pagination Controls (10 records each) */}
       {totalPages > 1 && (
-        <div className="pagination-bar">
+        <nav className="history-pagination manager-history-pagination" aria-label="Analyst survey pages">
           <button
             type="button"
-            className="pagination-btn"
+            className="history-page-button history-page-arrow"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            aria-label="Previous page"
           >
-            &laquo; Previous
+            &#8249; Previous
           </button>
-          <span className="pagination-info">
-            Page {currentPage} of {totalPages} ({filteredSurveys.length} total surveys)
-          </span>
+          {pageNumbers.map((page, index) => (
+            typeof page === "string" && page.startsWith("ellipsis") ? (
+              <span key={`ellipsis-${index}`} className="history-page-ellipsis" aria-hidden="true">...</span>
+            ) : (
+              <button
+                key={page}
+                type="button"
+                className={`history-page-button${currentPage === page ? " active" : ""}`}
+                onClick={() => setCurrentPage(page)}
+                aria-current={currentPage === page ? "page" : undefined}
+              >
+                {page}
+              </button>
+            )
+          ))}
           <button
             type="button"
-            className="pagination-btn"
+            className="history-page-button history-page-arrow"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            aria-label="Next page"
           >
-            Next &raquo;
+            Next &#8250;
           </button>
-        </div>
+        </nav>
       )}
     </div>
   );

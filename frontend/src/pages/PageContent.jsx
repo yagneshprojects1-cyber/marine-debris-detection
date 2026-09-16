@@ -14,6 +14,7 @@ export default function PageContent({
   onDetectionComplete,
   onNavigate,
   onGenerateReport,
+  analystName,
 }) {
   return (
     <>
@@ -27,6 +28,7 @@ export default function PageContent({
           aiApiBaseUrl={aiApiBaseUrl}
           onDetectionComplete={onDetectionComplete}
           onNavigate={onNavigate}
+          analystName={analystName}
         />
       </div>
 

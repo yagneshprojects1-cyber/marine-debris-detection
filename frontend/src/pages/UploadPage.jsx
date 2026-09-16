@@ -26,6 +26,7 @@ import { acceptBatchDetections, acceptDetection, batchDetect, batchPreprocess, s
 export default function UploadPage({
   aiApiBaseUrl,
   onDetectionComplete,
+  analystName,
 }) {
   const [uploadMode, setUploadMode] = useState("simulation");
   const [simulationImageFiles, setSimulationImageFiles] = useState([]);
@@ -222,6 +223,7 @@ export default function UploadPage({
         imageId,
         labels,
         item.result.annotated_image_url,
+        analystName,
       );
       setAcceptedBatchIds((currentIds) => [...currentIds, imageId]);
     } catch (err) {
@@ -232,7 +234,7 @@ export default function UploadPage({
   const handleSaveAll = async (records) => {
     setBatchSaving(true);
     try {
-      const response = await acceptBatchDetections(aiApiBaseUrl, records);
+      const response = await acceptBatchDetections(aiApiBaseUrl, records, analystName);
       setAcceptedBatchIds((currentIds) => [...new Set([...currentIds, ...response.image_ids])]);
       setBatchSaved(true);
       setBatchSaveOpen(false);

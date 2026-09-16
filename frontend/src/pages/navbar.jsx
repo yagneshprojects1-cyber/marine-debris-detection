@@ -43,29 +43,29 @@ const Navbar = ({
         <>
           <button
             type="button"
-            onClick={() => onNavigate("dashboard")}
-            aria-current={activeTab === "dashboard" ? "page" : undefined}
-            className={`navbar-tab${activeTab === "dashboard" ? " active" : ""}`}
+            onClick={() => onNavigate("waiting-approval")}
+            aria-current={activeTab === "waiting-approval" || activeTab === "dashboard" ? "page" : undefined}
+            className={`navbar-tab${activeTab === "waiting-approval" || activeTab === "dashboard" ? " active" : ""}`}
           >
-            Overview
+            Waiting for approval
           </button>
 
           <button
             type="button"
-            onClick={() => onNavigate("removal")}
-            aria-current={activeTab === "removal" ? "page" : undefined}
-            className={`navbar-tab${activeTab === "removal" ? " active" : ""}`}
+            onClick={() => onNavigate("allocate-removal")}
+            aria-current={activeTab === "allocate-removal" ? "page" : undefined}
+            className={`navbar-tab${activeTab === "allocate-removal" ? " active" : ""}`}
           >
-            Removal Operations
+            Allocate to removal
           </button>
 
           <button
             type="button"
-            onClick={() => onNavigate("route-optimization")}
-            aria-current={activeTab === "route-optimization" ? "page" : undefined}
-            className={`navbar-tab${activeTab === "route-optimization" ? " active" : ""}`}
+            onClick={() => onNavigate("manager-history")}
+            aria-current={activeTab === "manager-history" ? "page" : undefined}
+            className={`navbar-tab${activeTab === "manager-history" ? " active" : ""}`}
           >
-            Route Optimization
+            History
           </button>
         </>
       )}
@@ -80,14 +80,13 @@ const Navbar = ({
           >
             My Assigned Tasks
           </button>
-
           <button
             type="button"
-            onClick={() => onNavigate("route-optimization")}
-            aria-current={activeTab === "route-optimization" ? "page" : undefined}
-            className={`navbar-tab${activeTab === "route-optimization" ? " active" : ""}`}
+            onClick={() => onNavigate("operator-history")}
+            aria-current={activeTab === "operator-history" ? "page" : undefined}
+            className={`navbar-tab${activeTab === "operator-history" ? " active" : ""}`}
           >
-            Route Optimization
+            History
           </button>
         </>
       )}

@@ -1,10 +1,15 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import MapComponent from "./MapComponent";
 import SidePanel from "./SidePanel";
 import "./MapPage.css";
 
-export default function RouteOptimizationPage({ apiBaseUrl }) {
-  const [rawTargets, setRawTargets] = useState([]);
+export default function RouteOptimizationPage({ apiBaseUrl, initialTargets = null }) {
+  const [rawTargets, setRawTargets] = useState(initialTargets || []);
+  const initialTargetsKey = JSON.stringify(initialTargets);
+  const stableInitialTargets = useMemo(
+    () => (initialTargetsKey === "null" ? null : JSON.parse(initialTargetsKey)),
+    [initialTargetsKey],
+  );
   const [selectedSourceId, setSelectedSourceId] = useState("");
   const [optimalRoute, setOptimalRoute] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -134,6 +139,16 @@ export default function RouteOptimizationPage({ apiBaseUrl }) {
 
   // Auto-fetch database debris targets if no CSV uploaded yet
   React.useEffect(() => {
+    if (Array.isArray(stableInitialTargets)) {
+      setRawTargets(stableInitialTargets);
+      if (stableInitialTargets.length > 0) {
+        const firstId = stableInitialTargets[0].id;
+        setSelectedSourceId(firstId);
+        computeRoute(firstId, stableInitialTargets);
+      }
+      return undefined;
+    }
+
     const fetchDatabaseTargets = async () => {
       try {
         setLoading(true);
@@ -161,7 +176,7 @@ export default function RouteOptimizationPage({ apiBaseUrl }) {
     };
 
     fetchDatabaseTargets();
-  }, [apiBaseUrl, computeRoute]);
+  }, [apiBaseUrl, computeRoute, stableInitialTargets]);
 
   // Map route markers & path data
   const routeData =

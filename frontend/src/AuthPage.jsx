@@ -3,8 +3,6 @@ import { API_BASE_URL } from "./config/api";
 import "./AuthPage.css";
 
 const ROLE_OPTIONS = [
-  "Supervisor / Manager",
-  "System Administrator",
   "Sonar Analyst",
   "Marine Debris Removal Operator",
 ];

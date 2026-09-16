@@ -81,13 +81,14 @@ export async function batchDetect(apiBaseUrl, imageIds, onProgress) {
   return results;
 }
 
-export async function acceptDetection(apiBaseUrl, imageId, labels, annotatedImageUrl) {
+export async function acceptDetection(apiBaseUrl, imageId, labels, annotatedImageUrl, analystName) {
   const response = await fetch(`${apiBaseUrl}/api/history/${imageId}/accept`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       labels,
       annotated_image_url: annotatedImageUrl,
+      analyst_name: analystName,
     }),
   });
   const data = await response.json();
@@ -96,11 +97,11 @@ export async function acceptDetection(apiBaseUrl, imageId, labels, annotatedImag
   return data;
 }
 
-export async function acceptBatchDetections(apiBaseUrl, items) {
+export async function acceptBatchDetections(apiBaseUrl, items, analystName) {
   const response = await fetch(`${apiBaseUrl}/api/history/batch/accept`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({ items: items.map((item) => ({ ...item, analyst_name: analystName })) }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.detail || "Unable to save batch results");

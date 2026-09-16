@@ -57,7 +57,7 @@
   border-color: #38bdf8;
 }
 
-/* Stat Cards Grid (6 cards) */
+/* Stat Cards Grid */
 .manager-stat-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -260,6 +260,53 @@
   color: #94a3b8;
 }
 
+.manager-history-pagination {
+  margin-top: 1.25rem;
+}
+
+.manager-history-pagination .history-page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.manager-history-pagination .history-page-button:hover:not(:disabled),
+.manager-history-pagination .history-page-button.active {
+  border-color: rgba(112, 213, 202, 0.35);
+  background: rgba(112, 213, 202, 0.16);
+  color: #b8f0e8;
+}
+
+.manager-history-pagination .history-page-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.manager-history-pagination .history-page-arrow {
+  min-width: 94px;
+}
+
+.manager-history-pagination .history-page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 38px;
+  color: #64748b;
+  font-size: 13px;
+}
+
 /* Modal Nav Action Buttons for 2D MAP & 3D Map */
 .modal-nav-actions {
   display: flex;
@@ -395,6 +442,7 @@
 
 .badge-pending { background: rgba(234, 179, 8, 0.2); color: #facc15; }
 .badge-validated { background: rgba(34, 211, 238, 0.2); color: #22d3ee; }
+.badge-approved { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
 .badge-assigned { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
 .badge-completed { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
 
@@ -507,6 +555,95 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+.allocation-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.allocation-group-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 10px;
+  background: #1c2541;
+}
+
+.allocation-group-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.allocation-group-header h3 {
+  margin: 0;
+  color: #f8fafc;
+}
+
+.allocation-group-header span,
+.allocation-group-header strong {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.allocation-target-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.allocation-target {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem;
+  border-radius: 6px;
+  background: #0f172a;
+}
+
+.allocation-target strong { color: #f8fafc; font-size: 0.85rem; }
+.allocation-target span { color: #94a3b8; font-size: 0.75rem; }
+
+.allocated-operator-names {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+}
+
+.allocation-history-header {
+  margin-top: 2rem;
+}
+
+.operator-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.operator-picker legend {
+  padding: 0 0.35rem;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.operator-picker label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+}
+
 .modal-header {
   padding: 1.25rem 1.75rem;
   background: #1c2541;
@@ -549,7 +686,7 @@
 
 .modal-body-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 1fr;
   flex: 1;
   overflow: hidden;
 }
@@ -643,6 +780,33 @@
   gap: 1.25rem;
 }
 
+.detection-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detection-switcher button {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  background: #0f172a;
+  color: #94a3b8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.detection-switcher button.active,
+.detection-switcher button:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #e0f2fe;
+}
+
 .detail-section-header {
   display: flex;
   justify-content: space-between;
@@ -663,7 +827,7 @@
 
 .object-spec-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.85rem;
 }
 

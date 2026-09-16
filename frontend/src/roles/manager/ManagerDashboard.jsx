@@ -1,23 +1,25 @@
 import React, { useEffect, useState } from "react";
 import "./ManagerDashboard.css";
 import ManagerStatCards from "./components/ManagerStatCards";
-import AnalystSurveysList from "./components/AnalystSurveysList";
 import SurveyDetailModal from "./components/SurveyDetailModal";
-import RemovalPipeline from "./components/RemovalPipeline";
-import RouteOptimizationPage from "../../pages/RouteOptimizationPage";
+import AllocationGroups from "./components/AllocationGroups";
+import VerifiedDebrisList from "./components/VerifiedDebrisList";
+import HistoryPage from "../../pages/HistoryPage";
 import { API_BASE_URL } from "../../config/api";
 
 export default function ManagerDashboard({ activeTab = "dashboard" }) {
   const [stats, setStats] = useState({
-    total_surveys: 0,
     total_detections: 0,
     validated: 0,
-    high_priority: 0,
-    pending_review: 0,
+    approved: 0,
     removed: 0,
   });
+  const [allocationGroups, setAllocationGroups] = useState([]);
+  const [groupHistory, setGroupHistory] = useState([]);
+  const [validatedGroups, setValidatedGroups] = useState([]);
+  const [verifiedDebris, setVerifiedDebris] = useState([]);
   const [surveys, setSurveys] = useState([]);
-  const [detections, setDetections] = useState([]);
+  const [operators, setOperators] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [activeFilterCard, setActiveFilterCard] = useState(null);
@@ -25,24 +27,26 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
   const fetchManagerData = async () => {
     try {
       setIsLoading(true);
-      const [statsRes, surveysRes, detectionsRes] = await Promise.all([
+      const [statsRes, surveysRes, groupsRes, validatedGroupsRes, operatorsRes, groupHistoryRes, verifiedDebrisRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/manager/stats`),
         fetch(`${API_BASE_URL}/api/manager/surveys`),
-        fetch(`${API_BASE_URL}/api/manager/detections`),
+        fetch(`${API_BASE_URL}/api/manager/approval-groups`),
+        fetch(`${API_BASE_URL}/api/manager/validated-groups`),
+        fetch(`${API_BASE_URL}/api/manager/operators`),
+        fetch(`${API_BASE_URL}/api/manager/removal-groups/history`),
+        fetch(`${API_BASE_URL}/api/manager/verified-debris`),
       ]);
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setStats(statsData);
       }
-      if (surveysRes.ok) {
-        const surveysData = await surveysRes.json();
-        setSurveys(surveysData);
-      }
-      if (detectionsRes.ok) {
-        const detectionsData = await detectionsRes.json();
-        setDetections(detectionsData);
-      }
+      if (surveysRes.ok) setSurveys(await surveysRes.json());
+      if (groupsRes.ok) setAllocationGroups(await groupsRes.json());
+      if (validatedGroupsRes.ok) setValidatedGroups(await validatedGroupsRes.json());
+      if (operatorsRes.ok) setOperators(await operatorsRes.json());
+      if (groupHistoryRes.ok) setGroupHistory(await groupHistoryRes.json());
+      if (verifiedDebrisRes.ok) setVerifiedDebris(await verifiedDebrisRes.json());
     } catch (err) {
       console.error("Error fetching manager data from database:", err);
     } finally {
@@ -56,8 +60,9 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
 
   const handleUpdateDetection = async (payload) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/manager/update-detection`, {
-        method: "PATCH",
+      const endpoint = payload.status === "Approved" ? "approve" : "update-detection";
+      const res = await fetch(`${API_BASE_URL}/api/manager/${endpoint}`, {
+        method: payload.status === "Approved" ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -66,11 +71,33 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
 
       const data = await res.json();
       if (data.status === "success") {
-        fetchManagerData();
+        await fetchManagerData();
       }
+      return data;
     } catch (err) {
       console.error("Update error:", err);
+      throw err;
     }
+  };
+
+  const handleAllocate = async (group, selectedOperators) => {
+    const res = await fetch(`${API_BASE_URL}/api/manager/allocate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ group_id: group.groupId, detection_ids: group.ids, operators: selectedOperators }),
+    });
+    if (!res.ok) throw new Error("Unable to allocate debris for removal.");
+    await fetchManagerData();
+  };
+
+  const handleEditGroupOperators = async (groupId, selectedOperators) => {
+    const res = await fetch(`${API_BASE_URL}/api/manager/removal-groups/${groupId}/operators`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ operators: selectedOperators }),
+    });
+    if (!res.ok) throw new Error("Unable to update group operators.");
+    await fetchManagerData();
   };
 
   return (
@@ -95,7 +122,7 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
         </header>
 
         {/* 6 Stat Cards Section - ONLY ON DASHBOARD OVERVIEW */}
-        {activeTab === "dashboard" && (
+        {(activeTab === "dashboard" || activeTab === "waiting-approval") && (
           <section className="manager-section">
             <ManagerStatCards
               stats={stats}
@@ -105,35 +132,46 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
           </section>
         )}
 
-        {/* Dashboard Overview: Analyst Surveys List */}
-        {activeTab === "dashboard" && (
+        {(activeTab === "dashboard" || activeTab === "waiting-approval") && (
           <section className="manager-section">
-            <AnalystSurveysList
-              surveys={surveys}
-              onSelectSurvey={(srv) => setSelectedSurvey(srv)}
-              selectedSurveyId={selectedSurvey?.survey_id}
+            <VerifiedDebrisList
+              debris={verifiedDebris}
+              isLoading={isLoading}
+              onSelectDebris={(debris) => {
+                const survey = surveys.find((item) => item.image_id === debris.image_id);
+                if (survey) setSelectedSurvey(survey);
+              }}
+            />
+          </section>
+        )}
+
+        {(activeTab === "dashboard" || activeTab === "waiting-approval") && (
+          <section className="manager-section">
+            <AllocationGroups
+              groups={validatedGroups}
+              title="Validated Debris Groups"
+              allowAllocation={false}
             />
           </section>
         )}
 
         {/* Operational Removal Pipeline */}
-        {activeTab === "removal" && (
+        {activeTab === "allocate-removal" && (
           <section className="manager-section">
-            <RemovalPipeline
-              detections={detections}
-              onUpdateDetection={handleUpdateDetection}
+            <AllocationGroups
+              groups={allocationGroups}
+              operators={operators}
+              onAllocate={handleAllocate}
+              historyGroups={groupHistory}
+              onEditOperators={handleEditGroupOperators}
             />
           </section>
         )}
 
-        {/* Route Optimization */}
-        {activeTab === "route-optimization" && (
-          <section className="manager-section">
-            <RouteOptimizationPage apiBaseUrl={API_BASE_URL} />
-          </section>
+        {activeTab === "manager-history" && (
+          <HistoryPage apiBaseUrl={API_BASE_URL} includeAllocationDetails />
         )}
 
-        {/* Survey Detailed Inspection Pop-up Modal with 2D MAP & 3D Map buttons */}
         {selectedSurvey && (
           <SurveyDetailModal
             survey={selectedSurvey}
@@ -141,6 +179,7 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
             onUpdateDetection={handleUpdateDetection}
           />
         )}
+
       </div>
     </div>
   );

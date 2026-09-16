@@ -4,10 +4,12 @@ import MapPage from "../../pages/MapPage";
 import RouteOptimizationPage from "../../pages/RouteOptimizationPage";
 import { API_BASE_URL } from "../../config/api";
 
-export default function OperatorDashboard({ activeTab = "my-tasks" }) {
+export default function OperatorDashboard({ activeTab = "my-tasks", username }) {
   const [tasks, setTasks] = useState([]);
+  const [groupHistory, setGroupHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [modalView, setModalView] = useState("details"); // 'details' or 'map-2d'
   const [confirmingId, setConfirmingId] = useState(null);
 
@@ -15,13 +17,10 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/operator/tasks`);
+      const res = await fetch(`${API_BASE_URL}/api/operator/tasks?username=${encodeURIComponent(username || "")}`);
       if (res.ok) {
         const data = await res.json();
         setTasks(data);
@@ -35,7 +34,11 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+    fetch(`${API_BASE_URL}/api/operator/history?username=${encodeURIComponent(username || "")}`)
+      .then((response) => response.ok ? response.json() : [])
+      .then((data) => setGroupHistory(Array.isArray(data) ? data : []))
+      .catch(() => setGroupHistory([]));
+  }, [username]);
 
   const handleConfirmRemoval = async (task) => {
     try {
@@ -78,9 +81,16 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
     return true;
   });
 
-  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedTasks = filteredTasks.slice(startIndex, startIndex + itemsPerPage);
+  const taskGroups = Object.values(filteredTasks.reduce((groups, task) => {
+    const groupId = task.group_id || "Ungrouped tasks";
+    if (!groups[groupId]) {
+      groups[groupId] = { groupId, latitude: 0, longitude: 0, tasks: [] };
+    }
+    groups[groupId].tasks.push(task);
+    groups[groupId].latitude = groups[groupId].tasks.reduce((sum, item) => sum + (Number(item.latitude) || 0), 0) / groups[groupId].tasks.length;
+    groups[groupId].longitude = groups[groupId].tasks.reduce((sum, item) => sum + (Number(item.longitude) || 0), 0) / groups[groupId].tasks.length;
+    return groups;
+  }, {}));
 
   const getPriorityBadge = (priority) => {
     const p = (priority || "Normal").toLowerCase();
@@ -129,7 +139,7 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
           </div>
         </header>
 
-        {/* MY ASSIGNED TASKS LIST TABLE */}
+        {/* MY ASSIGNED TASKS GROUPS */}
         {activeTab === "my-tasks" && (
           <section className="operator-section">
             <div className="operator-panel">
@@ -150,7 +160,6 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    setCurrentPage(1);
                   }}
                 />
 
@@ -159,7 +168,6 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
                   value={filterPriority}
                   onChange={(e) => {
                     setFilterPriority(e.target.value);
-                    setCurrentPage(1);
                   }}
                 >
                   <option value="all">Priority (All)</option>
@@ -173,7 +181,6 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
                   value={filterStatus}
                   onChange={(e) => {
                     setFilterStatus(e.target.value);
-                    setCurrentPage(1);
                   }}
                 >
                   <option value="all">Status (All)</option>
@@ -183,96 +190,86 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
                 </select>
               </div>
 
-              <div className="operator-table-wrapper">
-                <table className="operator-table">
-                  <thead>
-                    <tr>
-                      <th>Removal Task</th>
-                      <th>Object Type</th>
-                      <th>Priority</th>
-                      <th>Location Coordinates</th>
-                      <th>Seabed Depth</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedTasks.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ textAlign: "center", padding: "2.5rem", color: "#94a3b8" }}>
-                          No removal tasks match your filter criteria or no tasks currently assigned to your crew.
-                        </td>
-                      </tr>
-                    ) : (
-                      paginatedTasks.map((t) => (
-                        <tr key={t.id || t.task_id} className="operator-task-row">
-                          <td>
-                            <strong className="task-id-text">{t.task_id}</strong>
-                            <span className="survey-sub-pill">{t.survey_id}</span>
-                          </td>
-                          <td>
-                            <strong className="object-type-text">{t.type || t.name}</strong>
-                          </td>
-                          <td>{getPriorityBadge(t.priority)}</td>
-                          <td>
-                            <span className="coords-mono">
-                              {t.latitude?.toFixed(5)} N, {t.longitude?.toFixed(5)} E
-                            </span>
-                          </td>
-                          <td>
-                            <span className="depth-badge">{t.depth} meters</span>
-                          </td>
-                          <td>{getStatusBadge(t.status)}</td>
-                          <td>
-                            <div className="table-action-btns">
-                              <button
-                                type="button"
-                                className="btn-view-details"
-                                onClick={() => handleOpenTaskDetails(t)}
-                              >
-                                View Details &rarr;
-                              </button>
-                              {t.status !== "Removed" && (
-                                <button
-                                  type="button"
-                                  className="btn-confirm-removal"
-                                  onClick={() => handleConfirmRemoval(t)}
-                                  disabled={confirmingId === (t.id || t.task_id)}
-                                >
-                                  {confirmingId === (t.id || t.task_id) ? "Confirming..." : "Confirm Removal"}
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <div className="operator-groups-grid">
+                {taskGroups.map((group) => (
+                  <article className="operator-group-card" key={group.groupId}>
+                    <div className="operator-group-header">
+                      <div>
+                        <span className="survey-sub-pill">{group.groupId}</span>
+                        <h3>{group.tasks.length} Assigned Debris</h3>
+                      </div>
+                      <span className="coords-mono">{group.latitude.toFixed(4)}, {group.longitude.toFixed(4)}</span>
+                    </div>
+                    <div className="operator-group-targets">
+                      {group.tasks.map((task) => (
+                        <div className="operator-group-target" key={task.id || task.task_id}>
+                          <strong>{task.name || task.type}</strong>
+                          <span>{task.latitude?.toFixed(5)} N, {task.longitude?.toFixed(5)} E</span>
+                          {getStatusBadge(task.status)}
+                          {task.status !== "Removed" && (
+                            <button
+                              type="button"
+                              className="btn-confirm-removal"
+                              onClick={() => handleConfirmRemoval(task)}
+                              disabled={confirmingId === (task.id || task.task_id)}
+                            >
+                              {confirmingId === (task.id || task.task_id) ? "Removing..." : "Removed"}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="operator-group-actions">
+                      <button type="button" className="btn-view-details" onClick={() => handleOpenTaskDetails(group.tasks[0])}>
+                        View Details &rarr;
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-confirm-removal"
+                        onClick={() => setSelectedGroup(group)}
+                      >
+                        Route Optimization
+                      </button>
+                    </div>
+                  </article>
+                ))}
               </div>
 
-              {/* 10 Records Pagination */}
-              {totalPages > 1 && (
-                <div className="operator-pagination-bar">
-                  <button
-                    type="button"
-                    className="op-page-btn"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  >
-                    &laquo; Previous
-                  </button>
-                  <span className="op-page-info">
-                    Page {currentPage} of {totalPages} ({filteredTasks.length} total tasks)
-                  </span>
-                  <button
-                    type="button"
-                    className="op-page-btn"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  >
-                    Next &raquo;
-                  </button>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "operator-history" && (
+          <section className="operator-section">
+            <div className="operator-panel">
+              <div className="panel-header">
+                <div>
+                  <h2>MY GROUP HISTORY</h2>
+                  <p className="panel-subtitle">Groups allocated to {username || "this operator"}.</p>
+                </div>
+                <span className="task-count-pill">{groupHistory.length} Groups</span>
+              </div>
+              {groupHistory.length === 0 ? (
+                <div className="empty-surveys-box"><p>No allocated group history found.</p></div>
+              ) : (
+                <div className="operator-groups-grid">
+                  {groupHistory.map((group) => (
+                    <article className="operator-group-card" key={group.group_id}>
+                      <div className="operator-group-header">
+                        <div><span className="survey-sub-pill">{group.group_id}</span><h3>{group.count} Debris</h3></div>
+                        <strong>{group.group_status}</strong>
+                      </div>
+                      <div className="operator-group-targets">
+                        {group.detections.map((task) => (
+                          <div className="operator-group-target" key={task.id}>
+                            <strong>{task.name}</strong>
+                            <span>{task.latitude?.toFixed(5)} N, {task.longitude?.toFixed(5)} E</span>
+                            {getStatusBadge(task.status)}
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
                 </div>
               )}
             </div>
@@ -284,6 +281,29 @@ export default function OperatorDashboard({ activeTab = "my-tasks" }) {
           <section className="operator-section">
             <RouteOptimizationPage apiBaseUrl={API_BASE_URL} />
           </section>
+        )}
+
+        {selectedGroup && (
+          <div className="operator-modal-backdrop" onClick={() => setSelectedGroup(null)}>
+            <div className="operator-route-modal" onClick={(event) => event.stopPropagation()}>
+              <div className="op-modal-header">
+                <div>
+                  <span className="task-modal-pill">{selectedGroup.surveyId}</span>
+                  <h2>GROUP ROUTE OPTIMIZATION</h2>
+                </div>
+                <button type="button" className="op-close-btn" onClick={() => setSelectedGroup(null)}>&times;</button>
+              </div>
+              <RouteOptimizationPage
+                apiBaseUrl={API_BASE_URL}
+                initialTargets={selectedGroup.tasks.map((task) => ({
+                  id: task.id || task.task_id,
+                  name: task.name || task.type,
+                  latitude: Number(task.latitude) || 0,
+                  longitude: Number(task.longitude) || 0,
+                }))}
+              />
+            </div>
+          </div>
         )}
 
         {/* TASK DETECTION DETAILS & 2D MAP POP-UP MODAL */}
