@@ -21,21 +21,27 @@
   font-size: 13px;
 }
 
-.navbar-action {
-  height: 40px;
+.navbar-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-left: auto;
-  padding: 0 16px;
+}
+
+.navbar-action {
+  padding: 0.5rem 1rem;
   border: 1px solid #2563eb;
-  border-radius: 6px;
-  background-color: #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
   color: #ffffff;
-  cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
 }
 
 .navbar-action:hover:not(:disabled) {
-  background-color: #1d4ed8;
+  background: #1d4ed8;
 }
 
 .navbar-action:disabled {

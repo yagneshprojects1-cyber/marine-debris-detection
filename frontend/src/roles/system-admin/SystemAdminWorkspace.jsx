@@ -260,57 +260,6 @@ export default function SystemAdminWorkspace({
 
   return (
     <main className="admin-workspace">
-      {/* Admin Subheader & Tab Switcher */}
-      <header className="admin-header">
-        <div className="admin-title-area">
-          <h1>
-            🖥️ System Administrator Control Plane
-            <span className="admin-title-badge">Gov & Security Mode</span>
-          </h1>
-          <p className="admin-subtitle">
-            Configure system parameters, manage RBAC user access, monitor hardware telemetry, and tune AI model inference.
-          </p>
-        </div>
-
-        <nav className="admin-nav-tabs" aria-label="System Administrator Tabs">
-          <button
-            type="button"
-            className={`admin-tab-btn ${currentTab === "dashboard" ? "active" : ""}`}
-            onClick={() => handleTabSwitch("dashboard")}
-          >
-            📊 System Dashboard
-          </button>
-          <button
-            type="button"
-            className={`admin-tab-btn ${currentTab === "users" ? "active" : ""}`}
-            onClick={() => handleTabSwitch("users")}
-          >
-            👥 User Management
-          </button>
-          <button
-            type="button"
-            className={`admin-tab-btn ${currentTab === "ai-config" ? "active" : ""}`}
-            onClick={() => handleTabSwitch("ai-config")}
-          >
-            🧠 AI Model Config
-          </button>
-          <button
-            type="button"
-            className={`admin-tab-btn ${currentTab === "system-config" ? "active" : ""}`}
-            onClick={() => handleTabSwitch("system-config")}
-          >
-            ⚙️ System Settings
-          </button>
-          <button
-            type="button"
-            className={`admin-tab-btn ${currentTab === "health-logs" ? "active" : ""}`}
-            onClick={() => handleTabSwitch("health-logs")}
-          >
-            📜 Health & Logs
-          </button>
-        </nav>
-      </header>
-
       {/* Tab Views */}
       {currentTab === "dashboard" && (
         <SystemAdminDashboard

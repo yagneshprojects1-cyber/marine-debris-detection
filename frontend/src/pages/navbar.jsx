@@ -13,10 +13,6 @@ const Navbar = ({
 
   return (
     <nav className="main-navbar" aria-label="Main navigation">
-      <span className="navbar-role" aria-label={`Signed in as ${role}`}>
-        {role}
-      </span>
-
       {!isAnalyst && !isManager && !isOperator && !isSystemAdmin && (
         <span className="navbar-role-label">Role workspace</span>
       )}
@@ -145,9 +141,21 @@ const Navbar = ({
         </>
       )}
 
-      <button type="button" className="navbar-action" onClick={onLogout}>
-        Logout
-      </button>
+      <div className="navbar-user-actions">
+        <span className="navbar-role" aria-label={`Signed in as ${role}`}>
+          {role}
+        </span>
+
+        <button
+          type="button"
+          className="navbar-action"
+          onClick={onLogout}
+          aria-label="Logout"
+          title="Logout"
+        >
+          Logout
+        </button>
+      </div>
     </nav>
   );
 };

@@ -7,7 +7,7 @@ const ROLES = [
   "System Administrator",
 ];
 
-export default function UserManagementView({ users, onCreateUser, onUpdateUser, onDeleteUser }) {
+export default function UserManagementView({ users = [], onCreateUser, onUpdateUser, onDeleteUser }) {
   const [selectedRoleFilter, setSelectedRoleFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -29,12 +29,18 @@ export default function UserManagementView({ users, onCreateUser, onUpdateUser, 
     },
   });
 
+  const getUserName = (user) => user.name || user.username || "Unnamed user";
+  const getUserEmail = (user) => user.email || user.username || "No email address";
+
   const filteredUsers = users.filter((u) => {
     const matchesRole = selectedRoleFilter === "ALL" || u.role === selectedRoleFilter;
+    const userName = getUserName(u).toLowerCase();
+    const userEmail = getUserEmail(u).toLowerCase();
+    const userRole = String(u.role || "").toLowerCase();
     const matchesSearch =
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.role.toLowerCase().includes(searchQuery.toLowerCase());
+      userName.includes(searchQuery.toLowerCase()) ||
+      userEmail.includes(searchQuery.toLowerCase()) ||
+      userRole.includes(searchQuery.toLowerCase());
     return matchesRole && matchesSearch;
   });
 
@@ -75,8 +81,8 @@ export default function UserManagementView({ users, onCreateUser, onUpdateUser, 
   const handleOpenEdit = (user) => {
     setEditingUser(user);
     setFormData({
-      name: user.name,
-      email: user.email,
+      name: getUserName(user),
+      email: getUserEmail(user),
       role: user.role,
       status: user.status,
       permissions: { ...user.permissions },
@@ -221,8 +227,8 @@ export default function UserManagementView({ users, onCreateUser, onUpdateUser, 
                 filteredUsers.map((user) => (
                   <tr key={user.id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: "#ffffff" }}>{user.name}</div>
-                      <div style={{ fontSize: "12px", color: "#64748b" }}>{user.email}</div>
+                      <div style={{ fontWeight: 600, color: "#ffffff" }}>{getUserName(user)}</div>
+                      <div style={{ fontSize: "12px", color: "#64748b" }}>{getUserEmail(user)}</div>
                     </td>
                     <td>
                       <span className={`role-badge ${getRoleClass(user.role)}`}>
