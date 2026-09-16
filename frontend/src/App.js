@@ -2,18 +2,29 @@ import { useEffect, useState } from "react";
 import './App.css';
 import Navbar from './pages/navbar';
 import PageContent from './pages/PageContent';
-import RoleSelectionPage from './roles/RoleSelectionPage';
 import RoleLandingPage from './roles/RoleLandingPage';
 import ManagerDashboard from './roles/manager/ManagerDashboard';
 import OperatorDashboard from './roles/operator/OperatorDashboard';
+import AuthPage from './AuthPage';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
 
 function App() {
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('marine_debris_user');
+    if (!savedUser) return null;
+
+    try {
+      return JSON.parse(savedUser);
+    } catch {
+      return null;
+    }
+  });
   const [activeTab, setActiveTab] = useState("dashboard");
   const [databaseDetections, setDatabaseDetections] = useState([]);
   const [detectionResult, setDetectionResult] = useState(null);
   const [showAnalysisToast, setShowAnalysisToast] = useState(false);
+
+  const selectedRole = user?.role || null;
 
   const loadMapData = () => {
     return fetch(`${API_BASE_URL}/api/map-data`)
@@ -75,9 +86,9 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleRoleSelect = (role) => {
-    setSelectedRole(role);
-    if (role === "Marine Debris Removal Operator") {
+  const handleAuthenticated = (sessionUser) => {
+    setUser(sessionUser);
+    if (sessionUser.role === "Marine Debris Removal Operator") {
       setActiveTab("my-tasks");
     } else {
       setActiveTab("dashboard");
@@ -85,13 +96,15 @@ function App() {
   };
 
   const handleLogout = () => {
-    setSelectedRole(null);
+    localStorage.removeItem('marine_debris_token');
+    localStorage.removeItem('marine_debris_user');
+    setUser(null);
     setDetectionResult(null);
     setActiveTab("dashboard");
   };
 
   if (!selectedRole) {
-    return <RoleSelectionPage onRoleSelect={handleRoleSelect} />;
+    return <AuthPage onAuthenticated={handleAuthenticated} />;
   }
 
   const isSonarAnalyst = selectedRole === "Sonar Analyst";

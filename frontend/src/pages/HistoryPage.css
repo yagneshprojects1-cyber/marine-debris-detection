@@ -254,61 +254,72 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
   width: fit-content;
-  max-width: 100%;
+  max-width: min(100%, 760px);
+  min-height: 52px;
   margin: 18px auto 0;
-  padding: 8px;
+  padding: 10px 12px;
   border: 1px solid #31484d;
-  border-radius: 10px;
-  background: #142328;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  border-radius: 12px;
+  background: rgba(20, 35, 40, 0.96);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
 }
 
 .history-page-button {
-  display: inline-grid;
-  width: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
   height: 38px;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 5px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: transparent;
   color: #8ba4a7;
   cursor: pointer;
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
+  transition: all 0.18s ease;
 }
 
 .history-page-button:hover:not(:disabled) {
   background: rgba(112, 213, 202, 0.12);
+  border-color: rgba(112, 213, 202, 0.28);
   color: #d8fffa;
 }
 
 .history-page-button.active {
-  background: #1b4e50;
+  background: linear-gradient(180deg, #1d5d5d, #163d42);
+  border-color: rgba(125, 225, 220, 0.4);
   color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .history-page-button:disabled {
   color: #4f6669;
   cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .history-page-ellipsis {
-  display: inline-grid;
-  width: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
   height: 38px;
-  place-items: center;
   color: #6f898c;
   font-weight: 800;
   letter-spacing: 2px;
 }
 
 .history-page-arrow {
-  font-size: 28px;
-  font-weight: 400;
+  min-width: 118px;
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1;
 }
 

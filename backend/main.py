@@ -25,6 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 import config
+from auth_router import router as auth_router, seed_default_users
 from routers import detection, history, map_data, positions, preprocessing, reports, route_planning, stats
 from roles import router as roles_router
 
@@ -48,6 +49,9 @@ config.RESULT_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=str(config.DATA_DIR)), name="media")
 app.mount("/3dmodels", StaticFiles(directory=str(config.THREE_D_MODELS_DIR)), name="3dmodels")
 
+# ── Seed required default users before the app starts serving requests ─────
+seed_default_users()
+
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(preprocessing.router)
 app.include_router(detection.router)
@@ -57,6 +61,7 @@ app.include_router(positions.router)
 app.include_router(route_planning.router)
 app.include_router(history.router)
 app.include_router(map_data.router)
+app.include_router(auth_router)
 app.include_router(roles_router.router)
 app.include_router(roles_router.manager_router)
 app.include_router(roles_router.operator_router)

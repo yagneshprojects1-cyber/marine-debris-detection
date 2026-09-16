@@ -39,15 +39,6 @@ const Navbar = ({
           >
             History
           </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigate("route-optimization")}
-            aria-current={activeTab === "route-optimization" ? "page" : undefined}
-            className={`navbar-tab${activeTab === "route-optimization" ? " active" : ""}`}
-          >
-            Route Optimization
-          </button>
         </>
       )}
 
