@@ -18,3 +18,5 @@ class AIPrediction(BaseModel):
     local_z: Optional[float] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    status: str = "Validated"
+    analyst_name: Optional[str] = None

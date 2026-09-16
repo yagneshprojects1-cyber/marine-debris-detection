@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -46,16 +47,34 @@ def seed_default_users() -> None:
     try:
         users = _user_collection()
         for username, user_data in DEFAULT_AUTH_USERS.items():
-            if users.find_one({"username": username}):
-                continue
-
-            users.insert_one({
-                "username": username,
-                "password_hash": hash_password(user_data["password"]),
-                "role": user_data["role"],
-                "account_created_at": timestamp,
-                "created_at": timestamp,
-            })
+            user_id = f"usr-{username.split('@', maxsplit=1)[0]}"
+            users.update_one(
+                {"username": username},
+                {
+                    "$set": {
+                        "user_id": user_id,
+                        "name": "System Administrator" if user_data["role"] == "System Administrator" else "Supervisor Manager",
+                        "email": username,
+                        "role": user_data["role"],
+                        "status": "Active",
+                        "last_login": "Never",
+                        "permissions": {
+                            "can_upload_sonar": user_data["role"] == "Supervisor / Manager",
+                            "can_run_ai": True,
+                            "can_manage_users": user_data["role"] == "System Administrator",
+                            "can_configure_system": user_data["role"] == "System Administrator",
+                            "can_export_reports": True,
+                            "can_dispatch_operators": user_data["role"] == "Supervisor / Manager",
+                        },
+                    },
+                    "$setOnInsert": {
+                        "password_hash": hash_password(user_data["password"]),
+                        "account_created_at": timestamp,
+                        "created_at": datetime.now(timezone.utc),
+                    },
+                },
+                upsert=True,
+            )
         return
     except Exception:
         _local_seed_default_users()
@@ -90,10 +109,11 @@ def _user_collection():
 
 
 def _validate_role(role: str) -> str:
-    if role not in SUPPORTED_ROLES:
+    signup_roles = {"Sonar Analyst", "Marine Debris Removal Operator"}
+    if role not in signup_roles:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported role '{role}'. Supported roles: {SUPPORTED_ROLES}",
+            detail=f"Unsupported signup role '{role}'. Supported roles: {sorted(signup_roles)}",
         )
     return role
 
@@ -111,12 +131,27 @@ def signup(payload: SignupRequest):
             raise HTTPException(status_code=409, detail="Username already exists.")
 
         created_at = datetime.now(timezone.utc).isoformat()
+        user_id = f"usr-{uuid4().hex[:12]}"
+        display_name = username.split("@", maxsplit=1)[0].replace(".", " ").replace("_", " ").title()
         saved_user = {
+            "user_id": user_id,
             "username": username,
+            "name": display_name,
+            "email": username,
             "password_hash": hash_password(payload.password),
             "role": role,
+            "status": "Active",
             "account_created_at": created_at,
-            "created_at": created_at,
+            "created_at": datetime.now(timezone.utc),
+            "last_login": "Never",
+            "permissions": {
+                "can_upload_sonar": role == "Sonar Analyst",
+                "can_run_ai": role == "Sonar Analyst",
+                "can_manage_users": False,
+                "can_configure_system": False,
+                "can_export_reports": True,
+                "can_dispatch_operators": role == "Marine Debris Removal Operator",
+            },
         }
         users.insert_one(saved_user)
         return AuthResponse(token=create_access_token({

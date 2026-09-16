@@ -82,12 +82,14 @@ class AnalystTrainingLabel(BaseModel):
 class SaveTrainingDataRequest(BaseModel):
     labels: List[AnalystTrainingLabel] = []
     annotated_image_url: Optional[str] = None
+    analyst_name: Optional[str] = None
 
 
 class BatchSaveTrainingItem(BaseModel):
     image_id: str
     labels: List[AnalystTrainingLabel] = []
     annotated_image_url: Optional[str] = None
+    analyst_name: Optional[str] = None
 
 
 class BatchSaveTrainingRequest(BaseModel):

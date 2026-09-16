@@ -38,7 +38,12 @@ def save_uploaded_image(
     )
 
 
-def save_detection_results(image_id: str, annotation: dict[str, Any], detections: list[dict[str, Any]]) -> None:
+def save_detection_results(
+    image_id: str,
+    annotation: dict[str, Any],
+    detections: list[dict[str, Any]],
+    analyst_name: str | None = None,
+) -> None:
     """Store metadata and predictions when the detect action completes."""
     database = get_database()
     sonar = annotation["sonar"]
@@ -83,6 +88,8 @@ def save_detection_results(image_id: str, annotation: dict[str, Any], detections
             local_z=detection.get("local_z"),
             latitude=detection.get("latitude"),
             longitude=detection.get("longitude"),
+            status="Validated",
+            analyst_name=analyst_name,
         )
         database["metadata"].insert_one(metadata.model_dump(mode="json"))
         database["ai_predictions"].insert_one(prediction.model_dump(mode="json"))
@@ -98,9 +105,15 @@ def save_training_data(
     analyst_labels: list[dict[str, Any]],
     annotated_image_url: str | None,
     confidence_threshold: float,
+    analyst_name: str | None = None,
 ) -> None:
     """Save the complete analyst-reviewed record for future model training."""
     database = get_database()
+    if analyst_name:
+        database["ai_predictions"].update_many(
+            {"image_id": image_id},
+            {"$set": {"analyst_name": analyst_name}},
+        )
     document = {
         "image_id": image_id,
         "image_name": image_name,
@@ -110,6 +123,7 @@ def save_training_data(
         "annotation": annotation,
         "ai_predictions": detections,
         "analyst_labels": analyst_labels,
+        "analyst_name": analyst_name,
         "confidence_threshold": confidence_threshold,
         "reviewed_at": datetime.now(timezone.utc),
     }
@@ -131,14 +145,21 @@ def list_history() -> list[dict[str, Any]]:
         item["meta_id"]: item
         for item in database["metadata"].find({}, {"_id": 0})
     }
+    group_by_detection = {}
+    for group in database["removal_groups"].find({}, {"_id": 0}):
+        for detection_id in group.get("detection_ids", []):
+            group_by_detection[detection_id] = group
     rows = []
     for prediction in database["ai_predictions"].find({}, {"_id": 0}).sort("predicted_id", -1):
         image = images.get(prediction.get("image_id"), {})
         meta = metadata.get(prediction.get("meta_id"), {})
+        group = group_by_detection.get(prediction.get("predicted_id"), {})
         uploaded_at = image.get("uploaded_timestamp")
         rows.append({
+            "predicted_id": prediction.get("predicted_id"),
             "object": prediction.get("object_class") or "Unknown",
             "confidence": prediction.get("confidence_score"),
+            "status": prediction.get("status") or "Validated",
             "latitude": prediction.get("latitude"),
             "longitude": prediction.get("longitude"),
             "date": uploaded_at,
@@ -151,6 +172,9 @@ def list_history() -> list[dict[str, Any]]:
             },
             "image_id": prediction.get("image_id"),
             "image_name": image.get("image_name"),
+            "analyst_name": prediction.get("analyst_name"),
+            "group_id": group.get("group_id"),
+            "allocated_operators": group.get("operators", []),
         })
     return sorted(
         rows,

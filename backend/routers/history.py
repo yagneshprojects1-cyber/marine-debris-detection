@@ -61,6 +61,7 @@ def accept_history_batch(request: BatchSaveTrainingRequest):
                 ],
                 annotated_image_url=item.annotated_image_url,
                 confidence_threshold=config.AI_REVIEW_THRESHOLD,
+                analyst_name=item.analyst_name,
             )
             if not low_confidence_indexes:
                 repository.save_uploaded_image(
@@ -73,6 +74,7 @@ def accept_history_batch(request: BatchSaveTrainingRequest):
                     image_id=item.image_id,
                     annotation=session["annotation"],
                     detections=session["detections"],
+                    analyst_name=item.analyst_name,
                 )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Unable to save the batch results.") from exc
@@ -121,6 +123,7 @@ def accept_history_record(image_id: str, request: SaveTrainingDataRequest):
             ],
             annotated_image_url=request.annotated_image_url,
             confidence_threshold=config.AI_REVIEW_THRESHOLD,
+            analyst_name=request.analyst_name,
         )
         if not low_confidence_indexes:
             repository.save_uploaded_image(
@@ -133,6 +136,7 @@ def accept_history_record(image_id: str, request: SaveTrainingDataRequest):
                 image_id=image_id,
                 annotation=session["annotation"],
                 detections=session["detections"],
+                analyst_name=request.analyst_name,
             )
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Unable to store the detection in history.") from exc
