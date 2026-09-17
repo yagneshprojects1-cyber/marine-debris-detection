@@ -14,21 +14,33 @@ export default function BatchUploadToolbar({
   onSubmit,
   disabled,
   running,
+  hasUnsavedResults = false,
+  onBlocked,
 }) {
   const imgRef = useRef(null);
   const xmlRef = useRef(null);
 
   const handleImagesChange = (e) => {
+    if (hasUnsavedResults) {
+      onBlocked?.();
+      e.target.value = "";
+      return;
+    }
     const files = Array.from(e.target.files || []);
     onImagesChange(files);
   };
 
   const handleXmlsChange = (e) => {
+    if (hasUnsavedResults) {
+      onBlocked?.();
+      e.target.value = "";
+      return;
+    }
     const files = Array.from(e.target.files || []);
     onXmlsChange(files);
   };
 
-  const canSubmit = imageFiles.length > 0 && xmlFiles.length > 0 && !disabled;
+  const canSubmit = imageFiles.length > 0 && xmlFiles.length > 0 && !disabled && !hasUnsavedResults;
 
   return (
     <div className="upload-toolbar">
@@ -79,7 +91,13 @@ export default function BatchUploadToolbar({
       <button
         type="button"
         className="action-button primary"
-        onClick={onSubmit}
+        onClick={() => {
+          if (hasUnsavedResults) {
+            onBlocked?.();
+            return;
+          }
+          onSubmit();
+        }}
         disabled={!canSubmit}
         style={{ marginLeft: "auto" }}
       >

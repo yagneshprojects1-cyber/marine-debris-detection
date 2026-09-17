@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 
-export default function AllocationGroups({ groups, operators = [], onAllocate, allowAllocation = true, title, historyGroups = [], onEditOperators }) {
+export default function AllocationGroups({ groups, operators = [], onAllocate, allowAllocation = true, title }) {
   const [selectedOperators, setSelectedOperators] = useState({});
   const [savingGroup, setSavingGroup] = useState(null);
-  const [editingGroup, setEditingGroup] = useState(null);
 
   const toggleOperator = (groupId, operatorName) => {
     setSelectedOperators((current) => {
@@ -29,25 +28,6 @@ export default function AllocationGroups({ groups, operators = [], onAllocate, a
     }
   };
 
-  const handleEdit = async (group) => {
-    const selected = selectedOperators[group.group_id] || group.operators || [];
-    setSavingGroup(group.group_id);
-    try {
-      await onEditOperators(group.group_id, selected);
-      setEditingGroup(null);
-    } finally {
-      setSavingGroup(null);
-    }
-  };
-
-  const openEditor = (group) => {
-    setSelectedOperators((current) => ({
-      ...current,
-      [group.group_id]: group.operators || [],
-    }));
-    setEditingGroup(group.group_id);
-  };
-
   const renderOperatorPicker = (group, editMode) => (
     <fieldset className="operator-picker">
       <legend>{editMode ? "Edit assigned operators" : "Assign debris removal operator"}</legend>
@@ -61,7 +41,7 @@ export default function AllocationGroups({ groups, operators = [], onAllocate, a
               checked={selected.includes(operator.name)}
               onChange={() => toggleOperator(group.group_id, operator.name)}
             />
-            <span>{operator.name}</span>
+            <span>{operator.email || "Email unavailable"}</span>
           </label>
         );
       })}
@@ -116,46 +96,6 @@ export default function AllocationGroups({ groups, operators = [], onAllocate, a
             );
           })}
         </div>
-      )}
-      {allowAllocation && historyGroups.length > 0 && (
-        <>
-          <div className="pipeline-header allocation-history-header">
-            <div>
-              <h2>Created Group History</h2>
-              <p className="pipeline-subtitle">Persisted groups and their allocated removal operators.</p>
-            </div>
-          </div>
-          <div className="allocation-groups-grid">
-            {historyGroups.map((group) => (
-              <article className="allocation-group-card" key={`history-${group.group_id}`}>
-                <div className="allocation-group-header">
-                  <div><h3>{group.group_id}</h3><span>{group.count} debris targets</span></div>
-                  <strong>{group.group_status}</strong>
-                </div>
-                <div className="allocation-target-list">
-                  {group.detections.map((detection) => (
-                    <div className="allocation-target" key={detection.id}>
-                      <strong>{detection.name}</strong>
-                      <span>{detection.survey_id}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="allocated-operator-names">
-                  Operators: {group.operators?.length ? group.operators.join(", ") : "Not allocated"}
-                </p>
-                {editingGroup === group.group_id && renderOperatorPicker(group, true)}
-                <button
-                  type="button"
-                  className="btn-save-decision"
-                  onClick={() => (editingGroup === group.group_id ? handleEdit(group) : openEditor(group))}
-                  disabled={savingGroup === group.group_id}
-                >
-                  {savingGroup === group.group_id ? "Saving..." : editingGroup === group.group_id ? "Save Operators" : "Edit Operators"}
-                </button>
-              </article>
-            ))}
-          </div>
-        </>
       )}
     </div>
   );

@@ -19,6 +19,7 @@ export default function BatchSaveReviewModal({ items, onClose, onSave, apiBaseUr
   const handleSave = () => {
     const records = completedItems.map((item) => ({
       image_id: item.result.image_id,
+      detections: item.result.objects_detected || [],
       annotated_image_url: item.result.annotated_image_url,
       labels: (item.result.objects_detected || []).map((detection, detectionIndex) => ({
         detection_index: detectionIndex,

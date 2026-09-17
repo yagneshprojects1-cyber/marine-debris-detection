@@ -12,11 +12,18 @@ export default function SimulationUploadToolbar({
   disabled,
   running,
   completed,
+  hasUnsavedResults = false,
+  onBlocked,
 }) {
   const folderRef = useRef(null);
-  const canSubmit = imageFiles.length > 0 && xmlFiles.length > 0 && startFile && Number(fileCount) > 0 && !disabled && !completed;
+  const canSubmit = imageFiles.length > 0 && xmlFiles.length > 0 && startFile && Number(fileCount) > 0 && !disabled && !completed && !hasUnsavedResults;
 
   const handleFolderChange = (event) => {
+    if (hasUnsavedResults) {
+      onBlocked?.();
+      event.target.value = "";
+      return;
+    }
     const files = Array.from(event.target.files || []);
     onFolderChange(files);
   };
@@ -78,7 +85,13 @@ export default function SimulationUploadToolbar({
       <button
         type="button"
         className="action-button primary"
-        onClick={onSubmit}
+        onClick={() => {
+          if (hasUnsavedResults) {
+            onBlocked?.();
+            return;
+          }
+          onSubmit();
+        }}
         disabled={!canSubmit}
         style={{ marginLeft: "auto" }}
       >

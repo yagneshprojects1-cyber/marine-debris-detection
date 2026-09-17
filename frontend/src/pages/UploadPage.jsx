@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./UploadPage.css";
 import UploadHeader from "../components/upload/UploadHeader";
 import UploadStatus from "../components/upload/UploadStatus";
@@ -45,12 +45,28 @@ export default function UploadPage({
   const [batchSaving, setBatchSaving] = useState(false);
   const [batchSaved, setBatchSaved] = useState(false);
 
+  const hasUnsavedBatchResults = batchItems.some(
+    (item) => item.phase === "done" && item.result && !acceptedBatchIds.includes(item.result.image_id),
+  );
+
   const [preprocessInfo, setPreprocessInfo] = useState(null); // { message, imageUrl }
   const [detectionResult, setDetectionResult] = useState(null);
 
   const [uploading, setUploading] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [error, setError] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+
+  useEffect(() => {
+    if (!toastMessage) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setToastMessage("");
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [toastMessage]);
+
   const handleUploadOtherImage = () => {
     setSimulationImageFiles([]);
     setSimulationXmlFiles([]);
@@ -73,12 +89,24 @@ export default function UploadPage({
   };
 
   const handleModeChange = (mode) => {
+    if (hasUnsavedBatchResults) {
+      setToastMessage("Please save all detection results to the database before uploading more files.");
+      return;
+    }
     if (mode === uploadMode || isBusy) return;
     handleUploadOtherImage();
     setUploadMode(mode);
   };
 
+  const handleBlockedUpload = () => {
+    setToastMessage("Please save all detection results to the database before uploading more files.");
+  };
+
   const handleSimulationFolderChange = (files) => {
+    if (hasUnsavedBatchResults) {
+      handleBlockedUpload();
+      return;
+    }
     const allImages = files.filter((file) => file.name.toLowerCase().endsWith(".bmp"));
     const allXmls = files.filter((file) => file.name.toLowerCase().endsWith(".xml"));
     const xmlStems = new Set(allXmls.map((file) => file.name.replace(/\.[^.]+$/, "").toLowerCase()));
@@ -101,6 +129,11 @@ export default function UploadPage({
   };
 
   const handleBatchUploadAndDetect = async () => {
+    if (hasUnsavedBatchResults) {
+      handleBlockedUpload();
+      return;
+    }
+
     const isSimulation = uploadMode === "simulation";
     const availableImages = isSimulation ? simulationImageFiles : batchImageFiles;
     const availableXmls = isSimulation ? simulationXmlFiles : batchXmlFiles;
@@ -248,6 +281,11 @@ export default function UploadPage({
   return (
     <div className="upload-page">
       <div className="upload-inner dashboard-layout">
+        {toastMessage && (
+          <div className="upload-toast" role="status" aria-live="polite">
+            {toastMessage}
+          </div>
+        )}
         <aside className="upload-sidebar">
           <UploadHeader onReset={handleUploadOtherImage} disabled={isBusy} />
           <span className="upload-mode-label">Upload mode</span>
@@ -279,9 +317,11 @@ export default function UploadPage({
               onStartFileChange={setSimulationStartFile}
               onFileCountChange={setSimulationFileCount}
               onSubmit={handleBatchUploadAndDetect}
-              disabled={isBusy}
+              disabled={isBusy || hasUnsavedBatchResults}
               running={isBusy}
               completed={simulationCompleted}
+              hasUnsavedResults={hasUnsavedBatchResults}
+              onBlocked={handleBlockedUpload}
             />
           ) : (
             <BatchUploadToolbar
@@ -290,8 +330,10 @@ export default function UploadPage({
               onImagesChange={setBatchImageFiles}
               onXmlsChange={setBatchXmlFiles}
               onSubmit={handleBatchUploadAndDetect}
-              disabled={isBusy}
+              disabled={isBusy || hasUnsavedBatchResults}
               running={isBusy}
+              hasUnsavedResults={hasUnsavedBatchResults}
+              onBlocked={handleBlockedUpload}
             />
           )}
           <UploadStatus

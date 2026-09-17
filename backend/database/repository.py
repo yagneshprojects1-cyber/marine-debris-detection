@@ -11,6 +11,37 @@ from .connection import get_database
 from .models import AIPrediction, Metadata, SonarImage
 
 
+def _build_low_confidence_training_data(
+    detections: list[dict[str, Any]],
+    analyst_labels: list[dict[str, Any]],
+    confidence_threshold: float,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Keep only low-confidence debris and replace its class with the analyst label."""
+    labels_by_index = {
+        label["detection_index"]: label.get("analyst_name", "").strip()
+        for label in analyst_labels
+    }
+    training_detections = []
+    training_labels = []
+
+    for index, detection in enumerate(detections):
+        confidence = detection.get("confidence")
+        if confidence is None or float(confidence) >= confidence_threshold:
+            continue
+
+        analyst_name = labels_by_index.get(index) or detection.get("name") or "Unknown"
+        training_detection = {**detection, "name": analyst_name}
+        training_detections.append(training_detection)
+        training_labels.append({
+            "detection_index": index,
+            "ai_name": detection.get("name"),
+            "analyst_name": analyst_name,
+            "confidence": confidence,
+        })
+
+    return training_detections, training_labels
+
+
 def save_uploaded_image(
     image_id: str,
     image_name: str,
@@ -107,8 +138,18 @@ def save_training_data(
     confidence_threshold: float,
     analyst_name: str | None = None,
 ) -> None:
-    """Save the complete analyst-reviewed record for future model training."""
+    """Save only low-confidence, analyst-labelled debris for future model training."""
     database = get_database()
+    training_detections, training_labels = _build_low_confidence_training_data(
+        detections,
+        analyst_labels,
+        confidence_threshold,
+    )
+
+    if not training_detections:
+        database["ai_training_data"].delete_one({"image_id": image_id})
+        return
+
     if analyst_name:
         database["ai_predictions"].update_many(
             {"image_id": image_id},
@@ -121,8 +162,8 @@ def save_training_data(
         "preprocessed_image_path": preprocessed_path,
         "annotated_image_url": annotated_image_url,
         "annotation": annotation,
-        "ai_predictions": detections,
-        "analyst_labels": analyst_labels,
+        "ai_predictions": training_detections,
+        "analyst_labels": training_labels,
         "analyst_name": analyst_name,
         "confidence_threshold": confidence_threshold,
         "reviewed_at": datetime.now(timezone.utc),

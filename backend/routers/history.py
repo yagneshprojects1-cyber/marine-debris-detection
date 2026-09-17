@@ -28,8 +28,13 @@ def accept_history_batch(request: BatchSaveTrainingRequest):
     sessions = []
     for item in request.items:
         session = session_store.get_session(item.image_id)
-        if session is None or session["detections"] is None:
-            raise HTTPException(status_code=409, detail=f"Detection is not ready for '{item.image_id}'.")
+        if session is None:
+            raise HTTPException(status_code=409, detail=f"Upload session expired for '{item.image_id}'. Please run detection again.")
+        if session["detections"] is None:
+            if not item.detections:
+                raise HTTPException(status_code=409, detail=f"Detection is not ready for '{item.image_id}'.")
+            session_store.save_detections(item.image_id, item.detections)
+            session = session_store.get_session(item.image_id)
 
         labels_by_index = {label.detection_index: label.analyst_name.strip() for label in item.labels}
         low_confidence_indexes = [

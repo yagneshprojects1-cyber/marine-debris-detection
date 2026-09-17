@@ -88,6 +88,7 @@ class SaveTrainingDataRequest(BaseModel):
 class BatchSaveTrainingItem(BaseModel):
     image_id: str
     labels: List[AnalystTrainingLabel] = []
+    detections: List[dict] = []
     annotated_image_url: Optional[str] = None
     analyst_name: Optional[str] = None
 

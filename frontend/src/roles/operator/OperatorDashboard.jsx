@@ -69,6 +69,7 @@ export default function OperatorDashboard({ activeTab = "my-tasks", username }) 
   };
 
   const filteredTasks = tasks.filter((task) => {
+    if (task.status === "Removed") return false;
     if (filterPriority !== "all" && !task.priority?.toLowerCase().includes(filterPriority.toLowerCase())) return false;
     if (filterStatus !== "all" && task.status !== filterStatus) return false;
     if (searchQuery) {
@@ -90,7 +91,7 @@ export default function OperatorDashboard({ activeTab = "my-tasks", username }) 
     groups[groupId].latitude = groups[groupId].tasks.reduce((sum, item) => sum + (Number(item.latitude) || 0), 0) / groups[groupId].tasks.length;
     groups[groupId].longitude = groups[groupId].tasks.reduce((sum, item) => sum + (Number(item.longitude) || 0), 0) / groups[groupId].tasks.length;
     return groups;
-  }, {}));
+  }, {})).filter((group) => group.tasks.length > 0);
 
   const getPriorityBadge = (priority) => {
     const p = (priority || "Normal").toLowerCase();

@@ -6,6 +6,7 @@ removal assignment tracking, and map datasets directly from MongoDB Atlas databa
 NO static data, NO mock seeding functions.
 """
 
+import math
 from typing import Any, Dict, List, Optional
 from database.connection import get_database
 
@@ -183,43 +184,135 @@ class ManagerDatabaseService:
             print(f"[MongoDB Error] get_removal_operators failed: {err}")
             return []
 
+    def _haversine_meters(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """Return approximate distance in meters between two coordinates."""
+        lat1_r = math.radians(lat1)
+        lon1_r = math.radians(lon1)
+        lat2_r = math.radians(lat2)
+        lon2_r = math.radians(lon2)
+        dlat = lat2_r - lat1_r
+        dlon = lon2_r - lon1_r
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
+        )
+        return 2 * 6371000 * math.asin(math.sqrt(a))
+
+    def _rebuild_group_center(self, group: Dict[str, Any]) -> None:
+        """Recalculate the centroid for a debris group after membership changes."""
+        if not group["detections"]:
+            return
+        count = len(group["detections"])
+        group["latitude"] = sum(float(item.get("latitude") or 0) for item in group["detections"]) / count
+        group["longitude"] = sum(float(item.get("longitude") or 0) for item in group["detections"]) / count
+
+    def _select_group_for_detection(
+        self,
+        groups: List[Dict[str, Any]],
+        detection: Dict[str, Any],
+        max_group_size: int = 10,
+        cluster_radius_m: float = 100.0,
+    ) -> Optional[Dict[str, Any]]:
+        """Choose the nearest open group that can accept the detection."""
+        lat = float(detection.get("latitude") or 0)
+        lon = float(detection.get("longitude") or 0)
+        candidates = []
+
+        for group in groups:
+            if len(group["detections"]) >= max_group_size:
+                continue
+            group_lat = float(group["latitude"])
+            group_lon = float(group["longitude"])
+            distance = self._haversine_meters(lat, lon, group_lat, group_lon)
+            if distance <= cluster_radius_m:
+                candidates.append((distance, group))
+
+        if not candidates:
+            return None
+
+        return min(candidates, key=lambda candidate: candidate[0])[1]
+
+    def _group_detections_by_radius(
+        self,
+        detections: List[Dict[str, Any]],
+        max_group_size: int = 10,
+        cluster_radius_m: float = 100.0,
+        group_prefix: str = "GRP",
+    ) -> List[Dict[str, Any]]:
+        """Cluster detections by proximity using a minimum distance threshold, with max_size only as a cap."""
+        if not detections:
+            return []
+
+        groups: List[Dict[str, Any]] = []
+        for detection in sorted(
+            detections,
+            key=lambda item: (
+                float(item.get("latitude") or 0),
+                float(item.get("longitude") or 0),
+            ),
+        ):
+            lat = float(detection.get("latitude") or 0)
+            lon = float(detection.get("longitude") or 0)
+
+            target_group = self._select_group_for_detection(
+                groups,
+                detection,
+                max_group_size=max_group_size,
+                cluster_radius_m=cluster_radius_m,
+            )
+
+            if target_group is not None:
+                target_group["detections"].append(detection)
+                self._rebuild_group_center(target_group)
+                continue
+
+            groups.append({
+                "group_id": f"{group_prefix}-{len(groups) + 1:03d}",
+                "detections": [detection],
+                "latitude": lat,
+                "longitude": lon,
+            })
+
+        merged_groups: List[Dict[str, Any]] = []
+        for group in groups:
+            merged = False
+            for existing in merged_groups:
+                if len(existing["detections"]) + len(group["detections"]) > max_group_size:
+                    continue
+                if self._haversine_meters(
+                    float(existing["latitude"]),
+                    float(existing["longitude"]),
+                    float(group["latitude"]),
+                    float(group["longitude"]),
+                ) <= cluster_radius_m:
+                    existing["detections"].extend(group["detections"])
+                    self._rebuild_group_center(existing)
+                    merged = True
+                    break
+            if not merged:
+                merged_groups.append(group)
+
+        for group in merged_groups:
+            group.setdefault("latitude", float(group["detections"][0].get("latitude") or 0))
+            group.setdefault("longitude", float(group["detections"][0].get("longitude") or 0))
+            group["count"] = len(group["detections"])
+
+        return merged_groups
+
     def get_approval_groups(self, max_group_size: int = 10) -> List[Dict[str, Any]]:
-        """Persist and return approved debris groups, max 10 targets per group."""
+        """Persist and return approved debris groups using a distance-based cluster radius."""
         detections = [
             detection for detection in self.get_all_detections()
             if detection.get("status") == "Approved"
         ]
-        groups: List[Dict[str, Any]] = []
-        for detection in detections:
-            available = [group for group in groups if len(group["detections"]) < max_group_size]
-            if not available:
-                groups.append({
-                    "group_id": f"REM-{len(groups) + 1:03d}",
-                    "detections": [detection],
-                    "latitude": float(detection.get("latitude") or 0),
-                    "longitude": float(detection.get("longitude") or 0),
-                })
-                continue
-            group = min(
-                available,
-                key=lambda candidate: (
-                    (float(detection.get("latitude") or 0) - candidate["latitude"]) ** 2
-                    + (float(detection.get("longitude") or 0) - candidate["longitude"]) ** 2
-                ),
-            )
-            group["detections"].append(detection)
-            count = len(group["detections"])
-            group["latitude"] = sum(float(item.get("latitude") or 0) for item in group["detections"]) / count
-            group["longitude"] = sum(float(item.get("longitude") or 0) for item in group["detections"]) / count
+        groups = self._group_detections_by_radius(detections, max_group_size=max_group_size, cluster_radius_m=100.0, group_prefix="REM")
 
-        for group in groups:
-            group.setdefault("latitude", float(group["detections"][0].get("latitude") or 0))
-            group.setdefault("longitude", float(group["detections"][0].get("longitude") or 0))
-            group["count"] = len(group["detections"])
         database = get_database()
+        active_detection_ids = {detection["id"] for detection in detections}
         existing = {
             group["group_id"]: group
             for group in database["removal_groups"].find({}, {"_id": 0})
+            if set(group.get("detection_ids", [])) & active_detection_ids
         }
         existing_by_members = {
             frozenset(group.get("detection_ids", [])): group
@@ -235,7 +328,7 @@ class ManagerDatabaseService:
             if not saved:
                 next_group_number += 1
             group["operators"] = saved.get("operators", [])
-            group["group_status"] = saved.get("group_status", "Waiting for allocation")
+            group["group_status"] = "Waiting for allocation"
             group["detection_ids"] = detection_ids
             database["removal_groups"].replace_one(
                 {"group_id": group["group_id"]},
@@ -253,33 +346,12 @@ class ManagerDatabaseService:
         return groups
 
     def get_validated_groups(self, max_group_size: int = 10) -> List[Dict[str, Any]]:
-        """Group only validated debris for manager review before approval."""
+        """Group only validated debris for manager review before approval, using a distance-based cluster radius."""
         detections = [
             detection for detection in self.get_all_detections()
             if detection.get("status") == "Validated"
         ]
-        groups: List[Dict[str, Any]] = []
-        for detection in detections:
-            available = [group for group in groups if len(group["detections"]) < max_group_size]
-            if not available:
-                groups.append({
-                    "group_id": f"VAL-{len(groups) + 1:03d}",
-                    "detections": [detection],
-                    "latitude": float(detection.get("latitude") or 0),
-                    "longitude": float(detection.get("longitude") or 0),
-                })
-                continue
-            group = min(
-                available,
-                key=lambda candidate: (
-                    (float(detection.get("latitude") or 0) - candidate["latitude"]) ** 2
-                    + (float(detection.get("longitude") or 0) - candidate["longitude"]) ** 2
-                ),
-            )
-            group["detections"].append(detection)
-            count = len(group["detections"])
-            group["latitude"] = sum(float(item.get("latitude") or 0) for item in group["detections"]) / count
-            group["longitude"] = sum(float(item.get("longitude") or 0) for item in group["detections"]) / count
+        groups = self._group_detections_by_radius(detections, max_group_size=max_group_size, cluster_radius_m=100.0, group_prefix="VAL")
         for group in groups:
             group["count"] = len(group["detections"])
         return groups

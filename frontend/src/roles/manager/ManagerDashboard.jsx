@@ -15,8 +15,6 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
     removed: 0,
   });
   const [allocationGroups, setAllocationGroups] = useState([]);
-  const [groupHistory, setGroupHistory] = useState([]);
-  const [validatedGroups, setValidatedGroups] = useState([]);
   const [verifiedDebris, setVerifiedDebris] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [operators, setOperators] = useState([]);
@@ -27,13 +25,11 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
   const fetchManagerData = async () => {
     try {
       setIsLoading(true);
-      const [statsRes, surveysRes, groupsRes, validatedGroupsRes, operatorsRes, groupHistoryRes, verifiedDebrisRes] = await Promise.all([
+      const [statsRes, surveysRes, groupsRes, operatorsRes, verifiedDebrisRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/manager/stats`),
         fetch(`${API_BASE_URL}/api/manager/surveys`),
         fetch(`${API_BASE_URL}/api/manager/approval-groups`),
-        fetch(`${API_BASE_URL}/api/manager/validated-groups`),
         fetch(`${API_BASE_URL}/api/manager/operators`),
-        fetch(`${API_BASE_URL}/api/manager/removal-groups/history`),
         fetch(`${API_BASE_URL}/api/manager/verified-debris`),
       ]);
 
@@ -43,9 +39,7 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
       }
       if (surveysRes.ok) setSurveys(await surveysRes.json());
       if (groupsRes.ok) setAllocationGroups(await groupsRes.json());
-      if (validatedGroupsRes.ok) setValidatedGroups(await validatedGroupsRes.json());
       if (operatorsRes.ok) setOperators(await operatorsRes.json());
-      if (groupHistoryRes.ok) setGroupHistory(await groupHistoryRes.json());
       if (verifiedDebrisRes.ok) setVerifiedDebris(await verifiedDebrisRes.json());
     } catch (err) {
       console.error("Error fetching manager data from database:", err);
@@ -87,16 +81,6 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
       body: JSON.stringify({ group_id: group.groupId, detection_ids: group.ids, operators: selectedOperators }),
     });
     if (!res.ok) throw new Error("Unable to allocate debris for removal.");
-    await fetchManagerData();
-  };
-
-  const handleEditGroupOperators = async (groupId, selectedOperators) => {
-    const res = await fetch(`${API_BASE_URL}/api/manager/removal-groups/${groupId}/operators`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ operators: selectedOperators }),
-    });
-    if (!res.ok) throw new Error("Unable to update group operators.");
     await fetchManagerData();
   };
 
@@ -145,16 +129,6 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
           </section>
         )}
 
-        {(activeTab === "dashboard" || activeTab === "waiting-approval") && (
-          <section className="manager-section">
-            <AllocationGroups
-              groups={validatedGroups}
-              title="Validated Debris Groups"
-              allowAllocation={false}
-            />
-          </section>
-        )}
-
         {/* Operational Removal Pipeline */}
         {activeTab === "allocate-removal" && (
           <section className="manager-section">
@@ -162,8 +136,6 @@ export default function ManagerDashboard({ activeTab = "dashboard" }) {
               groups={allocationGroups}
               operators={operators}
               onAllocate={handleAllocate}
-              historyGroups={groupHistory}
-              onEditOperators={handleEditGroupOperators}
             />
           </section>
         )}
