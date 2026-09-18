@@ -101,12 +101,30 @@ def _user_collection():
     return get_database()["users"]
 
 
+def _find_user(identifier: str):
+    """Find an account using either the login username or the admin-entered email."""
+    users = _user_collection()
+    return users.find_one({
+        "$or": [
+            {"username": identifier},
+            {"email": identifier},
+        ],
+    })
+
+
+def _get_account_created_at(user: dict[str, Any]) -> str:
+    """Return a JWT- and response-safe account creation timestamp."""
+    value = user.get("account_created_at") or user.get("created_at")
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value or "")
+
+
 @router.post("/login", response_model=AuthResponse)
 def login(payload: LoginRequest):
     username = payload.username.strip()
     try:
-        users = _user_collection()
-        user = users.find_one({"username": username})
+        user = _find_user(username)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid username or password.")
 
@@ -114,16 +132,17 @@ def login(payload: LoginRequest):
             raise HTTPException(status_code=401, detail="Invalid username or password.")
 
         role = user.get("role") or DEFAULT_ROLE
+        account_created_at = _get_account_created_at(user)
         token = create_access_token({
             "username": user["username"],
             "role": role,
-            "account_created_at": user.get("account_created_at") or user.get("created_at"),
+            "account_created_at": account_created_at,
         })
         return AuthResponse(
             token=token,
             username=user["username"],
             role=role,
-            account_created_at=user.get("account_created_at") or user.get("created_at"),
+            account_created_at=account_created_at,
         )
     except HTTPException:
         raise
@@ -135,16 +154,17 @@ def login(payload: LoginRequest):
             raise HTTPException(status_code=401, detail="Invalid username or password.")
 
         role = user.get("role") or DEFAULT_ROLE
+        account_created_at = _get_account_created_at(user)
         token = create_access_token({
             "username": user["username"],
             "role": role,
-            "account_created_at": user.get("account_created_at") or user.get("created_at"),
+            "account_created_at": account_created_at,
         })
         return AuthResponse(
             token=token,
             username=user["username"],
             role=role,
-            account_created_at=user.get("account_created_at") or user.get("created_at"),
+            account_created_at=account_created_at,
         )
 
 

@@ -32,9 +32,6 @@ backend/data/
 geotag_calculated.json
 *_detection_report.json
 
-# ── Model weights (large binary - use Git LFS if required) ────
-*.pt
-
 # ── Logs ──────────────────────────────────────────────────────
 *.log
 

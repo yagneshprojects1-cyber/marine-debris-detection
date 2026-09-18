@@ -77,13 +77,13 @@ export default function AuthPage({ onAuthenticated }) {
 
         <form className="auth-form" onSubmit={submitAuth}>
           <div className="auth-field">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">Username or email</label>
             <input
               id="username"
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="Enter username"
+              placeholder="Enter username or email"
               required
             />
           </div>
