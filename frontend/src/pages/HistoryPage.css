@@ -195,6 +195,7 @@
 .history-col-id { width: 220px; }
 .history-col-image { width: 240px; }
 .history-col-status { width: 150px; }
+.history-col-report { width: 150px; }
 .history-col-group { width: 130px; }
 .history-col-operators { width: 220px; }
 .history-col-checker { width: 190px; }
@@ -251,6 +252,17 @@
   font-weight: 700;
   white-space: normal;
 }
+
+.history-status-badge.status-pending,
+.history-status-badge.status-pending-review { background: var(--status-pending-bg); color: var(--status-pending-text); }
+.history-status-badge.status-validated { background: var(--status-validated-bg); color: var(--status-validated-text); }
+.history-status-badge.status-approved { background: var(--status-approved-bg); color: var(--status-approved-text); }
+.history-status-badge.status-assigned,
+.history-status-badge.status-assigned-for-removal,
+.history-status-badge.status-allocated-for-removal { background: var(--status-assigned-bg); color: var(--status-assigned-text); }
+.history-status-badge.status-in-progress { background: var(--status-progress-bg); color: var(--status-progress-text); }
+.history-status-badge.status-removed,
+.history-status-badge.status-removal-confirmed { background: var(--status-removed-bg); color: var(--status-removed-text); }
 
 
 .history-id {
@@ -519,4 +531,51 @@
   .history-detail-content {
     padding: 14px;
   }
+}
+
+.history-download-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid rgba(103, 232, 249, 0.35);
+  border-radius: 7px;
+  background: rgba(34, 211, 238, 0.1);
+  color: #8eeaf4;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.history-download-button:hover:not(:disabled) {
+  background: rgba(34, 211, 238, 0.2);
+  border-color: rgba(103, 232, 249, 0.65);
+}
+
+.history-download-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.history-download-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.history-group-badge {
+  display: inline-block;
+  padding: 5px 8px;
+  border: 1px solid rgba(245, 211, 106, 0.35);
+  border-radius: 5px;
+  background: rgba(245, 211, 106, 0.1);
+  color: #f5d36a;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: normal;
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import AdminIcon from "./AdminIcon";
 
 export default function SystemConfigView({ systemConfig, onUpdateConfig }) {
   const [formData, setFormData] = useState({
@@ -66,7 +67,7 @@ export default function SystemConfigView({ systemConfig, onUpdateConfig }) {
           {/* Storage & Data Retention Settings */}
           <div className="admin-card">
             <div className="admin-card-header">
-              <h3 className="admin-card-title">💾 Storage & Retention Policies</h3>
+              <h3 className="admin-card-title"><AdminIcon name="storage" /> Storage & Retention Policies</h3>
             </div>
 
             <div className="form-group">
@@ -139,7 +140,7 @@ export default function SystemConfigView({ systemConfig, onUpdateConfig }) {
           {/* Security, Database & Maintenance */}
           <div className="admin-card">
             <div className="admin-card-header">
-              <h3 className="admin-card-title">🔒 Platform Security & Maintenance</h3>
+              <h3 className="admin-card-title"><AdminIcon name="shield" /> Platform Security & Maintenance</h3>
             </div>
 
             <div className="form-group">
@@ -206,7 +207,7 @@ export default function SystemConfigView({ systemConfig, onUpdateConfig }) {
             disabled={!hasChanges}
             style={{ opacity: hasChanges ? 1 : 0.6, cursor: hasChanges ? "pointer" : "default" }}
           >
-            ✓ Save System Configuration
+            <AdminIcon name="check" /> Save System Configuration
           </button>
         </div>
       </form>

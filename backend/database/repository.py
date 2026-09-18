@@ -175,7 +175,7 @@ def save_training_data(
     )
 
 
-def list_history() -> list[dict[str, Any]]:
+def list_history(analyst_name: str | None = None) -> list[dict[str, Any]]:
     """Return database-backed history rows joined with image details."""
     database = get_database()
     images = {
@@ -192,6 +192,8 @@ def list_history() -> list[dict[str, Any]]:
             group_by_detection[detection_id] = group
     rows = []
     for prediction in database["ai_predictions"].find({}, {"_id": 0}).sort("predicted_id", -1):
+        if analyst_name and prediction.get("analyst_name") != analyst_name:
+            continue
         image = images.get(prediction.get("image_id"), {})
         meta = metadata.get(prediction.get("meta_id"), {})
         group = group_by_detection.get(prediction.get("predicted_id"), {})

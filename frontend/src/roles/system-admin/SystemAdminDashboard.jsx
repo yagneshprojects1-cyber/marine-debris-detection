@@ -1,4 +1,5 @@
 import React from "react";
+import AdminIcon from "./AdminIcon";
 
 export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onReloadModel }) {
   if (!dashboardData) {
@@ -31,7 +32,7 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
         <div className="admin-card stat-card">
           <div className="stat-header">
             <span className="stat-label">Platform Users</span>
-            <span className="stat-icon">👥</span>
+            <span className="stat-icon"><AdminIcon name="users" /></span>
           </div>
           <div className="stat-value">{total_users}</div>
           <div className="stat-subtext" style={{ display: "flex", justifyContent: "space-between" }}>
@@ -44,7 +45,7 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
         <div className="admin-card stat-card">
           <div className="stat-header">
             <span className="stat-label">System Health</span>
-            <span className="stat-icon">⚡</span>
+            <span className="stat-icon"><AdminIcon name="activity" /></span>
           </div>
           <div className="stat-value" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span className={`status-pill ${isOperational ? "operational" : "warning"}`}>
@@ -61,7 +62,7 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
         <div className="admin-card stat-card">
           <div className="stat-header">
             <span className="stat-label">Active AI Model</span>
-            <span className="stat-icon">🧠</span>
+            <span className="stat-icon"><AdminIcon name="brain" /></span>
           </div>
           <div className="stat-value" style={{ fontSize: "20px", color: "#38bdf8", marginTop: "14px" }}>
             {ai_model_status.active_model}
@@ -75,7 +76,7 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
         <div className="admin-card stat-card">
           <div className="stat-header">
             <span className="stat-label">App Data Storage</span>
-            <span className="stat-icon">💾</span>
+            <span className="stat-icon"><AdminIcon name="storage" /></span>
           </div>
           <div className="stat-value">{storage_status.total_storage_used_mb || 0} <span style={{ fontSize: "16px", color: "#94a3b8" }}>MB</span></div>
           <div className="stat-subtext">
@@ -89,13 +90,13 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
         {/* Left: Processing Engine & AI Telemetry */}
         <div className="admin-card">
           <div className="admin-card-header">
-            <h3 className="admin-card-title">⚙️ AI Inference & Queue Status</h3>
+            <h3 className="admin-card-title"><AdminIcon name="settings" /> AI Inference & Queue Status</h3>
             <button
               type="button"
               className="btn-secondary btn-sm"
               onClick={onReloadModel}
             >
-              🔄 Reload Model
+              <AdminIcon name="refresh" /> Reload Model
             </button>
           </div>
 
@@ -127,20 +128,20 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
         {/* Right: User Role Distribution & Quick Nav */}
         <div className="admin-card">
           <div className="admin-card-header">
-            <h3 className="admin-card-title">👥 User Role Allocation</h3>
+            <h3 className="admin-card-title"><AdminIcon name="users" /> User Role Allocation</h3>
             <button
               type="button"
               className="btn-secondary btn-sm"
               onClick={() => onNavigateTab("users")}
             >
-              Manage Users →
+              Manage Users <AdminIcon name="activity" />
             </button>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
-                <span style={{ color: "#38bdf8", fontWeight: 600 }}>🔬 Sonar Analysts</span>
+                <span style={{ color: "#38bdf8", fontWeight: 600 }}><AdminIcon name="activity" /> Sonar Analysts</span>
                 <span>{role_distribution["Sonar Analysts"] || 0} users</span>
               </div>
               <div className="progress-bar-bg">
@@ -150,7 +151,7 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
-                <span style={{ color: "#c084fc", fontWeight: 600 }}>📊 Supervisors / Managers</span>
+                <span style={{ color: "#c084fc", fontWeight: 600 }}><AdminIcon name="activity" /> Supervisors / Managers</span>
                 <span>{role_distribution["Supervisors / Managers"] || 0} users</span>
               </div>
               <div className="progress-bar-bg">
@@ -160,7 +161,7 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
-                <span style={{ color: "#fbbf24", fontWeight: 600 }}>🚢 Marine Debris Removal Operators</span>
+                <span style={{ color: "#fbbf24", fontWeight: 600 }}><AdminIcon name="activity" /> Marine Debris Removal Operators</span>
                 <span>{role_distribution["Marine Debris Removal Operators"] || 0} users</span>
               </div>
               <div className="progress-bar-bg">
@@ -170,7 +171,7 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
-                <span style={{ color: "#f87171", fontWeight: 600 }}>🖥️ System Administrators</span>
+                <span style={{ color: "#f87171", fontWeight: 600 }}><AdminIcon name="settings" /> System Administrators</span>
                 <span>{role_distribution["System Administrators"] || 0} users</span>
               </div>
               <div className="progress-bar-bg">
@@ -185,13 +186,13 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
       <div className="admin-grid-2">
         <div className="admin-card">
           <div className="admin-card-header">
-            <h3 className="admin-card-title">📊 Storage Utilization Breakdown</h3>
+            <h3 className="admin-card-title"><AdminIcon name="storage" /> Storage Utilization Breakdown</h3>
             <button
               type="button"
               className="btn-secondary btn-sm"
               onClick={() => onNavigateTab("system-config")}
             >
-              Storage Settings →
+              Storage Settings <AdminIcon name="activity" />
             </button>
           </div>
 
@@ -217,13 +218,13 @@ export default function SystemAdminDashboard({ dashboardData, onNavigateTab, onR
 
         <div className="admin-card">
           <div className="admin-card-header">
-            <h3 className="admin-card-title">🖥️ Server Hardware Telemetry</h3>
+            <h3 className="admin-card-title"><AdminIcon name="activity" /> Server Hardware Telemetry</h3>
             <button
               type="button"
               className="btn-secondary btn-sm"
               onClick={() => onNavigateTab("health-logs")}
             >
-              System Logs →
+              System Logs <AdminIcon name="activity" />
             </button>
           </div>
 

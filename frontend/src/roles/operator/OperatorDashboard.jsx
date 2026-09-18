@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import "./OperatorDashboard.css";
 import MapPage from "../../pages/MapPage";
 import RouteOptimizationPage from "../../pages/RouteOptimizationPage";
+import HistoryPage from "../../pages/HistoryPage";
 import { API_BASE_URL } from "../../config/api";
 
 export default function OperatorDashboard({ activeTab = "my-tasks", username }) {
   const [tasks, setTasks] = useState([]);
-  const [groupHistory, setGroupHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -34,10 +34,6 @@ export default function OperatorDashboard({ activeTab = "my-tasks", username }) 
 
   useEffect(() => {
     fetchTasks();
-    fetch(`${API_BASE_URL}/api/operator/history?username=${encodeURIComponent(username || "")}`)
-      .then((response) => response.ok ? response.json() : [])
-      .then((data) => setGroupHistory(Array.isArray(data) ? data : []))
-      .catch(() => setGroupHistory([]));
   }, [username]);
 
   const handleConfirmRemoval = async (task) => {
@@ -241,40 +237,11 @@ export default function OperatorDashboard({ activeTab = "my-tasks", username }) 
         )}
 
         {activeTab === "operator-history" && (
-          <section className="operator-section">
-            <div className="operator-panel">
-              <div className="panel-header">
-                <div>
-                  <h2>MY GROUP HISTORY</h2>
-                  <p className="panel-subtitle">Groups allocated to {username || "this operator"}.</p>
-                </div>
-                <span className="task-count-pill">{groupHistory.length} Groups</span>
-              </div>
-              {groupHistory.length === 0 ? (
-                <div className="empty-surveys-box"><p>No allocated group history found.</p></div>
-              ) : (
-                <div className="operator-groups-grid">
-                  {groupHistory.map((group) => (
-                    <article className="operator-group-card" key={group.group_id}>
-                      <div className="operator-group-header">
-                        <div><span className="survey-sub-pill">{group.group_id}</span><h3>{group.count} Debris</h3></div>
-                        <strong>{group.group_status}</strong>
-                      </div>
-                      <div className="operator-group-targets">
-                        {group.detections.map((task) => (
-                          <div className="operator-group-target" key={task.id}>
-                            <strong>{task.name}</strong>
-                            <span>{task.latitude?.toFixed(5)} N, {task.longitude?.toFixed(5)} E</span>
-                            {getStatusBadge(task.status)}
-                          </div>
-                        ))}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
+          <HistoryPage
+            apiBaseUrl={API_BASE_URL}
+            operatorName={username}
+            showGroupColumn
+          />
         )}
 
         {/* Route Optimization */}

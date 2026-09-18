@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import AdminIcon from "./AdminIcon";
+import { useAlert } from "../../components/AlertContext";
 
 export default function HealthAndLogsView({
   healthData,
@@ -9,6 +11,7 @@ export default function HealthAndLogsView({
 }) {
   const [selectedLevel, setSelectedLevel] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const { showConfirm } = useAlert();
 
   const handleLevelChange = (lvl) => {
     setSelectedLevel(lvl);
@@ -99,7 +102,7 @@ export default function HealthAndLogsView({
       <div className="admin-card" style={{ marginBottom: "24px" }}>
         <div className="admin-card-header">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <h3 className="admin-card-title">🩺 Live System Health & Telemetry</h3>
+            <h3 className="admin-card-title"><AdminIcon name="heart" /> Live System Health & Telemetry</h3>
             <span className={`status-pill ${isOperational ? "operational" : "warning"}`}>
               <span className="status-dot" />
               {healthData?.status || "Checking..."}
@@ -110,7 +113,7 @@ export default function HealthAndLogsView({
             className="btn-secondary btn-sm"
             onClick={onRefreshHealth}
           >
-            🔄 Refresh Telemetry
+            <AdminIcon name="refresh" /> Refresh Telemetry
           </button>
         </div>
 
@@ -195,10 +198,8 @@ export default function HealthAndLogsView({
             <button
               type="button"
               className="btn-danger btn-sm"
-              onClick={() => {
-                if (window.confirm("Purge archived audit trail logs?")) {
-                  onClearLogs();
-                }
+              onClick={async () => {
+                if (await showConfirm("Purge archived audit trail logs?", "Confirm log purge")) onClearLogs();
               }}
             >
               Purge

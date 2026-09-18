@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useAlert } from "../components/AlertContext";
 import L from "leaflet";
 import "leaflet-polylinedecorator";
 import "leaflet/dist/leaflet.css";
@@ -72,6 +73,7 @@ const MapComponent = ({
   markerZoom = 10,
   suppressDuplicateRouteClosure = true,
 }) => {
+  const { showAlert } = useAlert();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -291,7 +293,7 @@ const MapComponent = ({
   // Navigate to user's current location
   const goToMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      showAlert("Geolocation is not supported by your browser.", "Location unavailable");
       return;
     }
 
@@ -333,22 +335,22 @@ const MapComponent = ({
         setLocating(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            alert("Location access denied. Please enable location permissions.");
+            showAlert("Location access denied. Please enable location permissions.", "Location access denied");
             break;
           case error.POSITION_UNAVAILABLE:
-            alert("Location information is unavailable.");
+            showAlert("Location information is unavailable.", "Location unavailable");
             break;
           case error.TIMEOUT:
-            alert("Location request timed out. Try again.");
+            showAlert("Location request timed out. Try again.", "Location request timed out");
             break;
           default:
-            alert("Unknown error fetching location.");
+            showAlert("Unknown error fetching location.", "Location error");
             break;
         }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [locationVisible, onLocationFound]);
+  }, [locationVisible, onLocationFound, showAlert]);
 
   return (
     <div className="map-component">

@@ -176,7 +176,7 @@ def get_all_users(role_filter: Optional[str] = None) -> List[Dict[str, Any]]:
         if role_filter and role_filter.upper() != "ALL":
             query["role"] = role_filter
 
-        cursor = db["users"].find(query, {"_id": 0})
+        cursor = db["users"].find(query, {"_id": 0, "password_hash": 0})
         users = list(cursor)
         if users:
             for u in users:
@@ -187,7 +187,7 @@ def get_all_users(role_filter: Optional[str] = None) -> List[Dict[str, Any]]:
     except Exception:
         pass
 
-    users = list(_LOCAL_USERS_STORE)
+    users = [{key: value for key, value in user.items() if key != "password_hash"} for user in _LOCAL_USERS_STORE]
     if role_filter and role_filter.upper() != "ALL":
         users = [u for u in users if u.get("role", "").lower() == role_filter.lower()]
     for u in users:
@@ -199,7 +199,7 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     """Retrieve a single real user document from MongoDB."""
     try:
         db = get_database()
-        user = db["users"].find_one({"user_id": user_id}, {"_id": 0})
+        user = db["users"].find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
         if user:
             user["id"] = user.get("user_id")
             if isinstance(user.get("created_at"), datetime):
@@ -210,6 +210,7 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
 
     for u in _LOCAL_USERS_STORE:
         if u.get("user_id") == user_id or u.get("id") == user_id:
+            u = {key: value for key, value in u.items() if key != "password_hash"}
             u["id"] = u.get("user_id", u.get("id"))
             return u
     return None
@@ -230,6 +231,9 @@ def save_user(user_data: Dict[str, Any]) -> Dict[str, Any]:
         permissions=UserPermissions(**perms_data),
     )
     doc_dict = doc.model_dump(mode="python")
+    doc_dict["username"] = user_data.get("username", user_data["email"])
+    if user_data.get("password_hash"):
+        doc_dict["password_hash"] = user_data["password_hash"]
 
     try:
         db = get_database()

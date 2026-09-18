@@ -7,6 +7,7 @@ NO static data, NO mock seeding functions.
 """
 
 import math
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from database.connection import get_database
 
@@ -330,6 +331,9 @@ class ManagerDatabaseService:
             group["operators"] = saved.get("operators", [])
             group["group_status"] = "Waiting for allocation"
             group["detection_ids"] = detection_ids
+            created_at = saved.get("created_at") or datetime.now(timezone.utc).isoformat()
+            group["created_at"] = created_at
+            group["created_timestamp"] = saved.get("created_timestamp") or created_at
             database["removal_groups"].replace_one(
                 {"group_id": group["group_id"]},
                 {
@@ -340,6 +344,8 @@ class ManagerDatabaseService:
                     "operators": group["operators"],
                     "group_status": group["group_status"],
                     "max_size": max_group_size,
+                    "created_at": created_at,
+                    "created_timestamp": group["created_timestamp"],
                 },
                 upsert=True,
             )
@@ -374,7 +380,11 @@ class ManagerDatabaseService:
         if updated and group_id:
             database["removal_groups"].update_one(
                 {"group_id": group_id},
-                {"$set": {"operators": operators, "group_status": "Allocated for Removal"}},
+                {"$set": {
+                    "operators": operators,
+                    "group_status": "Allocated for Removal",
+                    "allocated_at": datetime.now(timezone.utc).isoformat(),
+                }},
             )
         return updated
 

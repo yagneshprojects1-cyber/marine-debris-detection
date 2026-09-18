@@ -2,11 +2,59 @@
 
 .admin-workspace {
   min-height: 100%;
-  background: #0d131f;
-  color: #e2e8f0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--marine-bg);
+  color: var(--marine-text);
+  font-family: var(--font-ui);
   padding: 24px 32px 64px;
   box-sizing: border-box;
+}
+
+.admin-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  vertical-align: -0.2em;
+}
+
+/* Shared sonar analyst green-teal visual language. */
+.admin-workspace {
+  background: var(--marine-bg);
+  color: var(--marine-text);
+}
+
+.admin-workspace .admin-nav-tabs,
+.admin-workspace .admin-card,
+.admin-workspace .admin-modal-content,
+.admin-workspace .admin-table-container {
+  background: var(--marine-surface);
+  border-color: var(--marine-border);
+}
+
+.admin-workspace .admin-tab-btn.active,
+.admin-workspace .btn-primary,
+.admin-workspace .admin-table th,
+.admin-workspace .admin-input,
+.admin-workspace .admin-select {
+  background: var(--marine-surface-raised);
+  border-color: var(--marine-border);
+  color: var(--marine-text);
+}
+
+.admin-workspace .admin-tab-btn.active,
+.admin-workspace .btn-primary {
+  background: var(--marine-accent);
+  border-color: var(--marine-accent);
+  color: var(--marine-bg);
+}
+
+.admin-workspace .admin-tab-btn:hover,
+.admin-workspace .btn-secondary:hover {
+  background: var(--marine-accent-soft);
+  color: var(--marine-accent);
 }
 
 /* Header & Tab Navigation */
@@ -51,7 +99,7 @@
 
 .admin-nav-tabs {
   display: flex;
-  background: #1e293b;
+  background: var(--marine-surface);
   padding: 4px;
   border-radius: 10px;
   gap: 4px;
@@ -101,8 +149,8 @@
 }
 
 .admin-card {
-  background: #141d2d;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--marine-surface);
+  border: 1px solid var(--marine-border);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -575,4 +623,33 @@
   .admin-workspace {
     padding: 16px;
   }
+}
+
+/* Final theme layer: keep every admin surface aligned with sonar history. */
+.admin-workspace {
+  background: var(--marine-bg) !important;
+  color: var(--marine-text);
+}
+
+.admin-workspace .admin-nav-tabs,
+.admin-workspace .admin-card,
+.admin-workspace .admin-modal-content,
+.admin-workspace .admin-table-container {
+  background: var(--marine-surface) !important;
+  border-color: var(--marine-border) !important;
+}
+
+.admin-workspace .admin-table th,
+.admin-workspace .admin-input,
+.admin-workspace .admin-select {
+  background: var(--marine-surface-raised) !important;
+  border-color: var(--marine-border) !important;
+  color: var(--marine-text) !important;
+}
+
+.admin-workspace .admin-tab-btn.active,
+.admin-workspace .btn-primary {
+  background: var(--marine-accent) !important;
+  border-color: var(--marine-accent) !important;
+  color: var(--marine-bg) !important;
 }

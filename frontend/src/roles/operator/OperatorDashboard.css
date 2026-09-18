@@ -2,10 +2,97 @@
 
 .operator-dashboard-page {
   min-height: 100%;
-  background-color: #0b132b;
-  color: #f8fafc;
+  background-color: var(--marine-bg);
+  color: var(--marine-text);
   padding: 1.5rem 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--font-ui);
+}
+
+/* Final theme layer: keep every operator surface aligned with sonar history. */
+.operator-dashboard-page,
+.operator-dashboard-page .operator-dashboard-inner {
+  background-color: var(--marine-bg) !important;
+  color: var(--marine-text);
+}
+
+.operator-dashboard-page .operator-panel,
+.operator-dashboard-page .operator-route-modal,
+.operator-dashboard-page .operator-modal-content,
+.operator-dashboard-page .operator-modal,
+.operator-dashboard-page .operator-group-card,
+.operator-dashboard-page .operator-table-wrapper {
+  background: var(--marine-surface) !important;
+  border-color: var(--marine-border) !important;
+}
+
+.operator-dashboard-page .operator-group-target,
+.operator-dashboard-page .operator-table th,
+.operator-dashboard-page .filter-select,
+.operator-dashboard-page .search-input,
+.operator-dashboard-page .fake-sonar-box {
+  background: var(--marine-surface-raised) !important;
+  border-color: var(--marine-border) !important;
+  color: var(--marine-text) !important;
+}
+
+.operator-dashboard-page .btn-sync-tasks,
+.operator-dashboard-page .btn-view-details,
+.operator-dashboard-page .btn-op-nav,
+.operator-dashboard-page .btn-open-map-inside {
+  background: var(--marine-accent-soft) !important;
+  border-color: var(--marine-border-strong) !important;
+  color: var(--marine-accent) !important;
+}
+
+.operator-dashboard-page .btn-sync-tasks:hover,
+.operator-dashboard-page .btn-view-details:hover,
+.operator-dashboard-page .btn-op-nav:hover,
+.operator-dashboard-page .btn-open-map-inside:hover {
+  background: var(--marine-accent) !important;
+  color: var(--marine-bg) !important;
+}
+
+/* Shared sonar analyst green-teal visual language. */
+.operator-dashboard-page {
+  background: var(--marine-bg);
+  color: var(--marine-text);
+}
+
+.operator-dashboard-page .operator-panel,
+.operator-dashboard-page .operator-route-modal,
+.operator-dashboard-page .operator-modal-content,
+.operator-dashboard-page .operator-modal,
+.operator-dashboard-page .operator-group-card {
+  background: var(--marine-surface);
+  border-color: var(--marine-border);
+}
+
+.operator-dashboard-page .operator-group-card,
+.operator-dashboard-page .operator-table-wrapper,
+.operator-dashboard-page .operator-table th,
+.operator-dashboard-page .operator-group-target,
+.operator-dashboard-page .filter-select,
+.operator-dashboard-page .search-input {
+  background: var(--marine-surface-raised);
+  border-color: var(--marine-border);
+  color: var(--marine-text);
+}
+
+.operator-dashboard-page .btn-sync-tasks,
+.operator-dashboard-page .btn-view-details,
+.operator-dashboard-page .btn-op-nav,
+.operator-dashboard-page .btn-open-map-inside {
+  background: var(--marine-accent-soft);
+  border-color: var(--marine-border-strong);
+  color: var(--marine-accent);
+}
+
+.operator-dashboard-page .btn-sync-tasks:hover,
+.operator-dashboard-page .btn-view-details:hover,
+.operator-dashboard-page .btn-op-nav:hover,
+.operator-dashboard-page .btn-open-map-inside:hover {
+  background: var(--marine-accent);
+  color: var(--marine-bg);
 }
 
 .operator-dashboard-inner {
@@ -34,7 +121,7 @@
 .btn-sync-tasks {
   background: rgba(56, 189, 248, 0.15);
   border: 1px solid rgba(56, 189, 248, 0.3);
-  color: #38bdf8;
+  color: var(--marine-accent);
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   font-weight: 600;
@@ -48,8 +135,8 @@
 }
 
 .operator-panel {
-  background: #151e38;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--marine-surface);
+  border: 1px solid var(--marine-border);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -68,7 +155,7 @@
   padding: 1rem;
   border: 1px solid rgba(56, 189, 248, 0.25);
   border-radius: 10px;
-  background: #1c2541;
+  background: var(--marine-surface-raised);
 }
 
 .operator-group-header,
@@ -100,7 +187,7 @@
   align-items: center;
   padding: 0.65rem;
   border-radius: 6px;
-  background: #0f172a;
+  background: var(--marine-bg);
 }
 
 .operator-group-target strong { color: #f8fafc; font-size: 0.85rem; }
@@ -113,7 +200,7 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  background: #151e38;
+  background: var(--marine-surface);
 }
 
 .operator-route-modal > .route-optimization-page,
@@ -222,9 +309,9 @@
   border-radius: 4px;
 }
 
-.s-assigned { background: rgba(234, 179, 8, 0.2); color: #facc15; }
-.s-progress { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-.s-removed { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.s-assigned { background: var(--status-assigned-bg); color: var(--status-assigned-text); }
+.s-progress { background: var(--status-progress-bg); color: var(--status-progress-text); }
+.s-removed { background: var(--status-removed-bg); color: var(--status-removed-text); }
 
 .coords-mono {
   font-family: monospace;

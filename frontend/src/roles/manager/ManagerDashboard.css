@@ -2,10 +2,119 @@
 
 .manager-dashboard-page {
   min-height: 100%;
-  background-color: #0b132b;
-  color: #f8fafc;
+  background-color: var(--marine-bg);
+  color: var(--marine-text);
   padding: 1.5rem 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--font-ui);
+}
+
+/* Final theme layer: keep every manager surface aligned with sonar history. */
+.manager-dashboard-page,
+.manager-dashboard-page .manager-dashboard-inner {
+  background-color: var(--marine-bg) !important;
+  color: var(--marine-text);
+}
+
+.manager-dashboard-page .manager-stat-card,
+.manager-dashboard-page .analyst-surveys-container,
+.manager-dashboard-page .operator-group-card,
+.manager-dashboard-page .admin-card,
+.manager-dashboard-page .manager-section,
+.manager-dashboard-page .manager-panel,
+.manager-dashboard-page .manager-modal,
+.manager-dashboard-page .manager-table-wrapper,
+.manager-dashboard-page .manager-map-panel,
+.manager-dashboard-page .manager-3d-panel {
+  background: var(--marine-surface) !important;
+  border-color: var(--marine-border) !important;
+}
+
+.manager-dashboard-page .surveys-table-wrapper,
+.manager-dashboard-page .pipeline-table-wrapper,
+.manager-dashboard-page .operator-group-target,
+.manager-dashboard-page .filter-select,
+.manager-dashboard-page input,
+.manager-dashboard-page textarea,
+.manager-dashboard-page select {
+  background: var(--marine-surface-raised) !important;
+  border-color: var(--marine-border) !important;
+  color: var(--marine-text) !important;
+}
+
+.manager-dashboard-page .btn-refresh-data,
+.manager-dashboard-page .btn-primary,
+.manager-dashboard-page .btn-inspect-survey-table,
+.manager-dashboard-page .btn-view-details,
+.manager-dashboard-page .manager-action-button {
+  background: var(--marine-accent-soft) !important;
+  border-color: var(--marine-border-strong) !important;
+  color: var(--marine-accent) !important;
+}
+
+.manager-dashboard-page .btn-refresh-data:hover,
+.manager-dashboard-page .btn-primary:hover,
+.manager-dashboard-page .btn-inspect-survey-table:hover,
+.manager-dashboard-page .btn-view-details:hover,
+.manager-dashboard-page .manager-action-button:hover {
+  background: var(--marine-accent) !important;
+  color: var(--marine-bg) !important;
+}
+
+/* Shared sonar analyst green-teal visual language. */
+.manager-dashboard-page {
+  background: var(--marine-bg);
+  color: var(--marine-text);
+}
+
+.manager-dashboard-page .manager-stat-card,
+.manager-dashboard-page .analyst-surveys-container,
+.manager-dashboard-page .manager-section,
+.manager-dashboard-page .manager-panel,
+.manager-dashboard-page .manager-modal,
+.manager-dashboard-page .manager-table-wrapper,
+.manager-dashboard-page .manager-map-panel,
+.manager-dashboard-page .manager-3d-panel {
+  background: var(--marine-surface);
+  border-color: var(--marine-border);
+}
+
+.manager-dashboard-page .manager-stat-card.active,
+.manager-dashboard-page .surveys-table-wrapper,
+.manager-dashboard-page .operator-group-card,
+.manager-dashboard-page .allocation-group-card,
+.manager-dashboard-page .survey-detail-modal {
+  background: var(--marine-surface-raised);
+  border-color: var(--marine-border-strong);
+}
+
+.manager-dashboard-page .filter-select,
+.manager-dashboard-page input,
+.manager-dashboard-page textarea,
+.manager-dashboard-page select,
+.manager-dashboard-page .surveys-table th,
+.manager-dashboard-page .manager-table th {
+  background: var(--marine-bg);
+  border-color: var(--marine-border);
+  color: var(--marine-text);
+}
+
+.manager-dashboard-page .btn-refresh-data,
+.manager-dashboard-page .btn-primary,
+.manager-dashboard-page .btn-inspect-survey-table,
+.manager-dashboard-page .btn-view-details,
+.manager-dashboard-page .manager-action-button {
+  background: var(--marine-accent-soft);
+  border-color: var(--marine-border-strong);
+  color: var(--marine-accent);
+}
+
+.manager-dashboard-page .btn-refresh-data:hover,
+.manager-dashboard-page .btn-primary:hover,
+.manager-dashboard-page .btn-inspect-survey-table:hover,
+.manager-dashboard-page .btn-view-details:hover,
+.manager-dashboard-page .manager-action-button:hover {
+  background: var(--marine-accent);
+  color: var(--marine-bg);
 }
 
 .manager-dashboard-inner {
@@ -30,7 +139,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #38bdf8;
+  color: var(--marine-accent);
 }
 
 .manager-page-title {
@@ -65,8 +174,8 @@
 }
 
 .manager-stat-card {
-  background: #1c2541;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--marine-surface);
+  border: 1px solid var(--marine-border);
   border-radius: 10px;
   padding: 1.2rem;
   display: flex;
@@ -84,7 +193,7 @@
 
 .manager-stat-card.active {
   border-color: #38bdf8;
-  background: #1e293b;
+  background: var(--marine-surface-raised);
 }
 
 .stat-card-header {
@@ -124,8 +233,8 @@
 
 /* Surveys List Section */
 .analyst-surveys-container {
-  background: #151e38;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--marine-surface);
+  border: 1px solid var(--marine-border);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -167,7 +276,7 @@
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
-  background: #1c2541;
+  background: var(--marine-surface);
 }
 
 .surveys-table {
@@ -184,7 +293,7 @@
 }
 
 .surveys-table th {
-  background: #0f172a;
+  background: var(--marine-surface-raised);
   color: #94a3b8;
   font-weight: 600;
 }
@@ -440,11 +549,17 @@
   font-weight: 600;
 }
 
-.badge-pending { background: rgba(234, 179, 8, 0.2); color: #facc15; }
-.badge-validated { background: rgba(34, 211, 238, 0.2); color: #22d3ee; }
-.badge-approved { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
-.badge-assigned { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
-.badge-completed { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.badge-pending { background: var(--status-pending-bg); color: var(--status-pending-text); }
+.badge-validated { background: var(--status-validated-bg); color: var(--status-validated-text); }
+.badge-approved { background: var(--status-approved-bg); color: var(--status-approved-text); }
+.badge-assigned { background: var(--status-assigned-bg); color: var(--status-assigned-text); }
+.badge-completed { background: var(--status-removed-bg); color: var(--status-removed-text); }
+
+.status-select.s-validated { background: var(--status-validated-bg); color: var(--status-validated-text); }
+.status-select.s-approved { background: var(--status-approved-bg); color: var(--status-approved-text); }
+.status-select.s-assigned-for-removal,
+.status-select.s-allocated-for-removal { background: var(--status-assigned-bg); color: var(--status-assigned-text); }
+.status-select.s-removed { background: var(--status-removed-bg); color: var(--status-removed-text); }
 
 .survey-title {
   font-size: 1.05rem;

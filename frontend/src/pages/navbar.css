@@ -2,11 +2,12 @@
   height: 64px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 18px;
   padding: 0 24px;
   background-color: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .navbar-role {
@@ -29,20 +30,37 @@
 }
 
 .navbar-action {
-  padding: 0.5rem 1rem;
-  border: 1px solid #2563eb;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
-  background: #2563eb;
-  color: #ffffff;
+  background: #ffffff;
+  color: #374151;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, opacity 0.15s ease;
 }
 
-.navbar-action:hover:not(:disabled) {
-  background: #1d4ed8;
+.navbar-action:hover {
+  background: #f3f4f6;
+  color: #111827;
 }
+
+.navbar-logout-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 
 .navbar-action:disabled {
   cursor: not-allowed;
@@ -50,7 +68,10 @@
 }
 
 .navbar-tab {
+  width: auto;
+  flex: 0 0 auto;
   height: 40px;
+  box-sizing: border-box;
   padding: 0 16px;
   border: none;
   border-bottom: 2px solid transparent;
@@ -59,6 +80,7 @@
   cursor: pointer;
   font-size: 15px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .navbar-tab:hover {
@@ -121,9 +143,14 @@
     padding: 0 8px;
     gap: 4px;
   }
-  .navbar-tab, .navbar-action {
+  .navbar-tab {
+    width: auto;
     padding: 0 8px;
     font-size: 13px;
+  }
+
+  .navbar-action {
+    flex: 0 0 auto;
   }
 
   .navbar-role {

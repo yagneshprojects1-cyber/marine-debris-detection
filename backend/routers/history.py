@@ -1,6 +1,6 @@
 """API for database-backed detection history."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from database import repository
 import session_store
@@ -11,10 +11,10 @@ router = APIRouter(prefix="/api", tags=["5 - History"])
 
 
 @router.get("/history")
-def get_history():
+def get_history(analyst_name: str | None = Query(default=None, min_length=1)):
     """Return detection history joined with its uploaded image details."""
     try:
-        return repository.list_history()
+        return repository.list_history(analyst_name=analyst_name)
     except Exception:
         # Atlas/network issues can temporarily prevent MongoDB access.
         # Return an empty result instead of crashing the history page so the UI

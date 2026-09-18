@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import AdminIcon from "./AdminIcon";
 
 export default function AIModelConfigView({ modelConfig, onUpdateConfig, onReloadModel }) {
   const [formData, setFormData] = useState({
@@ -59,7 +60,7 @@ export default function AIModelConfigView({ modelConfig, onUpdateConfig, onReloa
         {/* Available Models Grid */}
         <div className="admin-card" style={{ marginBottom: "24px" }}>
           <div className="admin-card-header">
-            <h3 className="admin-card-title">🧠 Registered YOLO AI Model Checkpoints</h3>
+            <h3 className="admin-card-title"><AdminIcon name="brain" /> Registered YOLO AI Model Checkpoints</h3>
             <span style={{ fontSize: "12px", color: "#94a3b8" }}>
               Last reloaded: {modelConfig?.last_reloaded ? new Date(modelConfig.last_reloaded).toLocaleTimeString() : "Recent"}
             </span>
@@ -107,7 +108,7 @@ export default function AIModelConfigView({ modelConfig, onUpdateConfig, onReloa
           {/* Left Column: Inference Parameters */}
           <div className="admin-card">
             <div className="admin-card-header">
-              <h3 className="admin-card-title">🎛️ Detection Sensitivity & NMS</h3>
+              <h3 className="admin-card-title"><AdminIcon name="sliders" /> Detection Sensitivity & NMS</h3>
             </div>
 
             {/* Confidence Threshold */}
@@ -176,7 +177,7 @@ export default function AIModelConfigView({ modelConfig, onUpdateConfig, onReloa
           {/* Right Column: Runtime Hardware & Preprocessing */}
           <div className="admin-card">
             <div className="admin-card-header">
-              <h3 className="admin-card-title">⚡ Hardware Accelerator & Filters</h3>
+              <h3 className="admin-card-title"><AdminIcon name="activity" /> Hardware Accelerator & Filters</h3>
             </div>
 
             {/* Device Selector */}
@@ -227,7 +228,7 @@ export default function AIModelConfigView({ modelConfig, onUpdateConfig, onReloa
                   className="btn-secondary btn-sm"
                   onClick={onReloadModel}
                 >
-                  🔄 Force Reload
+                  <AdminIcon name="refresh" /> Force Reload
                 </button>
               </div>
             </div>
@@ -242,7 +243,7 @@ export default function AIModelConfigView({ modelConfig, onUpdateConfig, onReloa
             disabled={!hasChanges}
             style={{ opacity: hasChanges ? 1 : 0.6, cursor: hasChanges ? "pointer" : "default" }}
           >
-            ✓ Apply AI Configuration Changes
+            <AdminIcon name="check" /> Apply AI Configuration Changes
           </button>
         </div>
       </form>

@@ -1,16 +1,15 @@
 from datetime import datetime, timezone
 from typing import Any
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 LOCAL_USER_STORE: dict[str, dict[str, Any]] = {}
 
 from auth_service import create_access_token, decode_access_token, hash_password, verify_password
 from database.connection import get_database
-from roles.constants import DEFAULT_ROLE, SUPPORTED_ROLES
+from roles.constants import DEFAULT_ROLE
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 security = HTTPBearer(auto_error=False)
@@ -80,12 +79,6 @@ def seed_default_users() -> None:
         _local_seed_default_users()
 
 
-class SignupRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
-    role: str = DEFAULT_ROLE
-
-
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -106,77 +99,6 @@ class AuthUser(BaseModel):
 
 def _user_collection():
     return get_database()["users"]
-
-
-def _validate_role(role: str) -> str:
-    signup_roles = {"Sonar Analyst", "Marine Debris Removal Operator"}
-    if role not in signup_roles:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported signup role '{role}'. Supported roles: {sorted(signup_roles)}",
-        )
-    return role
-
-
-@router.post("/signup", response_model=AuthResponse)
-def signup(payload: SignupRequest):
-    username = payload.username.strip()
-    if not username:
-        raise HTTPException(status_code=400, detail="Username is required.")
-
-    role = _validate_role(payload.role)
-    try:
-        users = _user_collection()
-        if users.find_one({"username": username}):
-            raise HTTPException(status_code=409, detail="Username already exists.")
-
-        created_at = datetime.now(timezone.utc).isoformat()
-        user_id = f"usr-{uuid4().hex[:12]}"
-        display_name = username.split("@", maxsplit=1)[0].replace(".", " ").replace("_", " ").title()
-        saved_user = {
-            "user_id": user_id,
-            "username": username,
-            "name": display_name,
-            "email": username,
-            "password_hash": hash_password(payload.password),
-            "role": role,
-            "status": "Active",
-            "account_created_at": created_at,
-            "created_at": datetime.now(timezone.utc),
-            "last_login": "Never",
-            "permissions": {
-                "can_upload_sonar": role == "Sonar Analyst",
-                "can_run_ai": role == "Sonar Analyst",
-                "can_manage_users": False,
-                "can_configure_system": False,
-                "can_export_reports": True,
-                "can_dispatch_operators": role == "Marine Debris Removal Operator",
-            },
-        }
-        users.insert_one(saved_user)
-        return AuthResponse(token=create_access_token({
-            "username": username,
-            "role": role,
-            "account_created_at": created_at,
-        }), username=username, role=role, account_created_at=created_at)
-    except HTTPException:
-        raise
-    except Exception:
-        if username in LOCAL_USER_STORE:
-            raise HTTPException(status_code=409, detail="Username already exists.")
-        created_at = datetime.now(timezone.utc).isoformat()
-        LOCAL_USER_STORE[username] = {
-            "username": username,
-            "password_hash": hash_password(payload.password),
-            "role": role,
-            "account_created_at": created_at,
-            "created_at": created_at,
-        }
-        return AuthResponse(token=create_access_token({
-            "username": username,
-            "role": role,
-            "account_created_at": created_at,
-        }), username=username, role=role, account_created_at=created_at)
 
 
 @router.post("/login", response_model=AuthResponse)

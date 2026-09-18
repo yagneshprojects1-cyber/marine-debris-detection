@@ -32,6 +32,7 @@ class UserCreateRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: str = Field(..., min_length=3, max_length=150)
     role: str = Field(..., description="Role: Sonar Analyst, Supervisor / Manager, Marine Debris Removal Operator, System Administrator")
+    password: str = Field(..., min_length=6, description="Initial password for the new account")
     status: str = Field(default="Active", pattern="^(Active|Inactive|Suspended)$")
     permissions: Optional[Dict[str, bool]] = None
 

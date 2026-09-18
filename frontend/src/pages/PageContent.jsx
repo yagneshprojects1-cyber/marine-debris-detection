@@ -55,7 +55,9 @@ export default function PageContent({
           imageUrl={detectionResult?.annotated_image_url}
         />
       )}
-      {activeTab === "history" && <HistoryPage apiBaseUrl={apiBaseUrl} />}
+      {activeTab === "history" && (
+        <HistoryPage apiBaseUrl={apiBaseUrl} analystName={analystName} />
+      )}
       {activeTab === "route-optimization" && (
         <RouteOptimizationPage apiBaseUrl={apiBaseUrl} />
       )}

@@ -152,11 +152,15 @@ const Navbar = ({
           aria-label="Logout"
           title="Logout"
         >
-          Logout
+          <svg className="navbar-logout-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
+            <path d="M14 8l4 4-4 4" />
+            <path d="M18 12H8" />
+          </svg>
         </button>
       </div>
     </nav>
-  );
+  ); 
 };
 
 export default Navbar;

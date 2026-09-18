@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from auth_service import hash_password
+
 import config
 from database import admin_repository
 from database.connection import ping_mongodb
@@ -180,6 +182,8 @@ def create_user(data: Dict[str, Any], actor: str = "System Administrator") -> Di
     user_payload = {
         "name": data["name"],
         "email": data["email"],
+        "username": data["email"],
+        "password_hash": hash_password(data["password"]),
         "role": role,
         "status": data.get("status", "Active"),
         "permissions": perms,

@@ -1,14 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@600;700&display=swap");
+
 html,
 body,
 #root {
   height: 100%;
 }
 
+:root {
+  --marine-bg: #0b1718;
+  --marine-surface: #122426;
+  --marine-surface-raised: #162d2f;
+  --marine-border: #28494a;
+  --marine-border-strong: #3e7778;
+  --marine-text: #e3f2f0;
+  --marine-text-muted: #8ba4a7;
+  --marine-accent: #70d5ca;
+  --marine-accent-soft: rgba(112, 213, 202, 0.14);
+  --status-pending-bg: rgba(245, 158, 11, 0.18);
+  --status-pending-text: #fbbf24;
+  --status-validated-bg: rgba(56, 189, 248, 0.18);
+  --status-validated-text: #67e8f9;
+  --status-approved-bg: rgba(34, 197, 94, 0.18);
+  --status-approved-text: #86efac;
+  --status-assigned-bg: rgba(168, 85, 247, 0.18);
+  --status-assigned-text: #d8b4fe;
+  --status-progress-bg: rgba(59, 130, 246, 0.18);
+  --status-progress-text: #93c5fd;
+  --status-removed-bg: rgba(239, 68, 68, 0.18);
+  --status-removed-text: #fca5a5;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-ui: "Inter", sans-serif;
+  --font-data: "JetBrains Mono", monospace;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-ui);
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -20,19 +48,49 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d1117;
+  background: var(--marine-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #30363d;
+  background: var(--marine-border-strong);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #484f58;
+  background: #5aa6a2;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: var(--font-data);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+button,
+input,
+select,
+textarea,
+option {
+  font-family: var(--font-ui);
+}
+
+.history-mono,
+.history-id,
+.coords-mono,
+.coords-text,
+.mono,
+.data-value,
+.sonar-data,
+[class*="coordinate"],
+[class*="-id"] {
+  font-family: var(--font-data) !important;
+  font-weight: 400;
 }

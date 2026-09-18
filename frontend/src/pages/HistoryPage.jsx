@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import DetectionResults from "../components/upload/DetectionResults";
 import MapPage from "./MapPage";
 import ThreeDMapPage from "./ThreeDMapPage";
+import { downloadReport } from "../utils/downloadReport";
 import "./HistoryPage.css";
 
 const formatDate = (value) => {
@@ -34,7 +35,7 @@ const getPageNumbers = (currentPage, totalPages) => {
   return [1, "ellipsis-start", currentPage - 1, currentPage, currentPage + 1, "ellipsis-end", totalPages];
 };
 
-export default function HistoryPage({ apiBaseUrl, includeAllocationDetails = false }) {
+export default function HistoryPage({ apiBaseUrl, analystName, operatorName, includeAllocationDetails = false, showGroupColumn = false }) {
   const [historyItems, setHistoryItems] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
@@ -46,11 +47,41 @@ export default function HistoryPage({ apiBaseUrl, includeAllocationDetails = fal
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${apiBaseUrl}/api/history`, { signal: controller.signal })
+    const historyUrl = new URL(`${apiBaseUrl}/api/${operatorName ? "operator/history" : "history"}`);
+    if (operatorName) historyUrl.searchParams.set("username", operatorName);
+    if (analystName) historyUrl.searchParams.set("analyst_name", analystName);
+
+    fetch(historyUrl, { signal: controller.signal })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Unable to load detection history.");
-        setHistoryItems(Array.isArray(data) ? data : []);
+        if (operatorName) {
+          const removedItems = (Array.isArray(data) ? data : []).flatMap((group) => (
+            (group.detections || [])
+              .filter((detection) => detection.status === "Removed")
+              .map((detection) => ({
+                predicted_id: detection.id,
+                object: detection.name,
+                confidence: detection.confidence,
+                status: detection.status,
+                latitude: detection.latitude,
+                longitude: detection.longitude,
+                date: group.created_at || group.created_timestamp,
+                timestamp: group.created_timestamp || group.created_at,
+                bounding_box: detection.bndbox,
+                image_id: detection.image_id,
+                image_name: detection.image_id,
+                analyst_name: detection.analyst_name,
+                group_id: group.group_id,
+                group_status: group.group_status,
+                group_created_at: group.created_at || group.created_timestamp,
+                allocated_operators: group.operators || [],
+              }))
+          ));
+          setHistoryItems(removedItems);
+        } else {
+          setHistoryItems(Array.isArray(data) ? data : []);
+        }
       })
       .catch((requestError) => {
         if (requestError.name !== "AbortError") {
@@ -62,7 +93,7 @@ export default function HistoryPage({ apiBaseUrl, includeAllocationDetails = fal
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [apiBaseUrl, refreshToken]);
+  }, [apiBaseUrl, analystName, operatorName, refreshToken]);
 
   const visibleItems = useMemo(() => (
     selectedDate
@@ -81,6 +112,8 @@ export default function HistoryPage({ apiBaseUrl, includeAllocationDetails = fal
     ? ((confidences.reduce((total, confidence) => total + confidence, 0) / confidences.length) * 100).toFixed(1)
     : "0.0";
   const highestConfidence = confidences.length ? (Math.max(...confidences) * 100).toFixed(1) : "0.0";
+  const extraColumnCount = includeAllocationDetails ? 3 : showGroupColumn ? 1 : 0;
+  const emptyStateColumnCount = 13 + extraColumnCount;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -186,22 +219,26 @@ export default function HistoryPage({ apiBaseUrl, includeAllocationDetails = fal
               <col className="history-col-id" />
               <col className="history-col-image" />
               <col className="history-col-status" />
+              <col className="history-col-report" />
               {includeAllocationDetails && <col className="history-col-group" />}
               {includeAllocationDetails && <col className="history-col-operators" />}
               {includeAllocationDetails && <col className="history-col-checker" />}
+              {showGroupColumn && !includeAllocationDetails && <col className="history-col-group" />}
             </colgroup>
             <thead>
               <tr>
                 <th>S.No.</th><th>Details</th><th>Object</th><th>Confidence</th><th>Latitude</th><th>Longitude</th>
                 <th>Date</th><th>Timestamp</th><th>Bounding Box (xmin, ymin - xmax, ymax)</th><th>Image ID</th><th>Image Name</th>
                 <th>Status</th>
+                <th>JSON Report</th>
                 {includeAllocationDetails && <><th>Group</th><th>Allocated Operators</th><th>Debris Checker</th></>}
+                {showGroupColumn && !includeAllocationDetails && <th>Group</th>}
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td className="history-empty" colSpan={includeAllocationDetails ? 15 : 12}>Loading database history...</td></tr>}
-              {!loading && error && <tr><td className="history-empty history-error" colSpan={includeAllocationDetails ? 15 : 12}>{error}</td></tr>}
-              {!loading && !error && visibleItems.length === 0 && <tr><td className="history-empty" colSpan={includeAllocationDetails ? 15 : 12}>No uploaded image detections found.</td></tr>}
+              {loading && <tr><td className="history-empty" colSpan={emptyStateColumnCount}>Loading database history...</td></tr>}
+              {!loading && error && <tr><td className="history-empty history-error" colSpan={emptyStateColumnCount}>{error}</td></tr>}
+              {!loading && !error && visibleItems.length === 0 && <tr><td className="history-empty" colSpan={emptyStateColumnCount}>{operatorName ? "No removed debris found for this operator." : "No uploaded image detections found."}</td></tr>}
               {!loading && !error && paginatedItems.map((item, index) => (
                 <tr key={item.predicted_id || `${item.image_id}-${item.object}-${item.timestamp}-${index}`}>
                   <td className="history-serial">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
@@ -216,12 +253,36 @@ export default function HistoryPage({ apiBaseUrl, includeAllocationDetails = fal
                   <td className="history-mono history-id">{item.image_id || "-"}</td>
                   <td><div className="history-row-actions"><span>{item.image_name || "-"}</span></div></td>
                   <td><span className={`history-status-badge status-${(item.status || "Validated").toLowerCase().replace(/\s+/g, "-")}`}>{item.status || "Validated"}</span></td>
+                  <td>
+                    <button
+                      type="button"
+                      className="history-download-button"
+                      onClick={() => downloadReport(apiBaseUrl, item.image_id)}
+                      disabled={!item.image_id}
+                      title="Download JSON detection report"
+                      aria-label={`Download JSON report for ${item.object || "detection"}`}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M12 3v11" />
+                        <path d="m7 10 5 5 5-5" />
+                        <path d="M4 20h16" />
+                      </svg>
+                      <span>Download</span>
+                    </button>
+                  </td>
                   {includeAllocationDetails && (
                     <>
                       <td className="history-mono">{item.group_id || "-"}</td>
                       <td>{item.allocated_operators?.length ? item.allocated_operators.join(", ") : "-"}</td>
                       <td>{item.analyst_name || "Sonar Analyst"}</td>
                     </>
+                  )}
+                  {showGroupColumn && !includeAllocationDetails && (
+                    <td>
+                      <span className="history-group-badge">
+                        {item.group_id || "Ungrouped"}
+                      </span>
+                    </td>
                   )}
                 </tr>
               ))}

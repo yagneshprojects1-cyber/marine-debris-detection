@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import AdminIcon from "./AdminIcon";
+import { useAlert } from "../../components/AlertContext";
 
 const ROLES = [
   "Sonar Analyst",
@@ -12,11 +14,13 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const { showConfirm } = useAlert();
 
   // Form states for new/edit user
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
     role: "Sonar Analyst",
     status: "Active",
     permissions: {
@@ -64,6 +68,7 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
     setFormData({
       name: "",
       email: "",
+      password: "",
       role: "Sonar Analyst",
       status: "Active",
       permissions: {
@@ -83,6 +88,7 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
     setFormData({
       name: getUserName(user),
       email: getUserEmail(user),
+      password: "",
       role: user.role,
       status: user.status,
       permissions: { ...user.permissions },
@@ -130,7 +136,8 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
     if (!formData.name || !formData.email) return;
 
     if (editingUser) {
-      onUpdateUser(editingUser.id, formData);
+      const { password, ...updates } = formData;
+      onUpdateUser(editingUser.id, updates);
     } else {
       onCreateUser(formData);
     }
@@ -156,28 +163,28 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
               className={`btn-secondary btn-sm ${selectedRoleFilter === "Sonar Analyst" ? "btn-primary" : ""}`}
               onClick={() => setSelectedRoleFilter("Sonar Analyst")}
             >
-              🔬 Sonar Analysts
+              <AdminIcon name="activity" /> Sonar Analysts
             </button>
             <button
               type="button"
               className={`btn-secondary btn-sm ${selectedRoleFilter === "Supervisor / Manager" ? "btn-primary" : ""}`}
               onClick={() => setSelectedRoleFilter("Supervisor / Manager")}
             >
-              📊 Supervisors / Managers
+              <AdminIcon name="activity" /> Supervisors / Managers
             </button>
             <button
               type="button"
               className={`btn-secondary btn-sm ${selectedRoleFilter === "Marine Debris Removal Operator" ? "btn-primary" : ""}`}
               onClick={() => setSelectedRoleFilter("Marine Debris Removal Operator")}
             >
-              🚢 Removal Operators
+              <AdminIcon name="activity" /> Removal Operators
             </button>
             <button
               type="button"
               className={`btn-secondary btn-sm ${selectedRoleFilter === "System Administrator" ? "btn-primary" : ""}`}
               onClick={() => setSelectedRoleFilter("System Administrator")}
             >
-              🖥️ Administrators
+              <AdminIcon name="settings" /> Administrators
             </button>
           </div>
 
@@ -196,7 +203,7 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
               className="btn-primary"
               onClick={handleOpenCreate}
             >
-              + Create User
+              <AdminIcon name="plus" /> Create User
             </button>
           </div>
         </div>
@@ -208,7 +215,7 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
           <table className="admin-table">
             <thead>
               <tr>
-                <th>User</th>
+                <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
                 <th>Permissions</th>
@@ -226,10 +233,7 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
               ) : (
                 filteredUsers.map((user) => (
                   <tr key={user.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#ffffff" }}>{getUserName(user)}</div>
-                      <div style={{ fontSize: "12px", color: "#64748b" }}>{getUserEmail(user)}</div>
-                    </td>
+                    <td style={{ color: "#ffffff", fontWeight: 600 }}>{getUserEmail(user)}</td>
                     <td>
                       <span className={`role-badge ${getRoleClass(user.role)}`}>
                         {user.role}
@@ -280,8 +284,8 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
                         <button
                           type="button"
                           className="btn-danger btn-sm"
-                          onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete account for ${user.name}?`)) {
+                          onClick={async () => {
+                            if (await showConfirm(`Are you sure you want to delete account for ${user.email || user.username}?`, "Delete user account")) {
                               onDeleteUser(user.id);
                             }
                           }}
@@ -309,7 +313,7 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
                 className="modal-close"
                 onClick={() => setIsCreateModalOpen(false)}
               >
-                ✕
+                <AdminIcon name="close" />
               </button>
             </div>
 
@@ -339,6 +343,22 @@ export default function UserManagementView({ users = [], onCreateUser, onUpdateU
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
+
+              {!editingUser && (
+                <div className="form-group">
+                  <label>Initial Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    className="admin-input"
+                    style={{ width: "100%" }}
+                    placeholder="At least 6 characters"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                </div>
+              )}
 
               <div className="form-row">
                 <div className="form-group" style={{ flex: 1 }}>

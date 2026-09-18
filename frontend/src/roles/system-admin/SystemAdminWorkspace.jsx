@@ -5,6 +5,7 @@ import UserManagementView from "./UserManagementView";
 import AIModelConfigView from "./AIModelConfigView";
 import SystemConfigView from "./SystemConfigView";
 import HealthAndLogsView from "./HealthAndLogsView";
+import AdminIcon from "./AdminIcon";
 
 export default function SystemAdminWorkspace({
   apiBaseUrl,
@@ -306,7 +307,7 @@ export default function SystemAdminWorkspace({
       {/* Toast Notification */}
       {toastMessage && (
         <div className="admin-toast">
-          <span>✓</span>
+          <AdminIcon name="check" />
           <span>{toastMessage}</span>
         </div>
       )}
