@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<annotation>
+    <sonar>
+        <range>14.998</range>
+        <azimuth>120</azimuth>
+        <elevation>20</elevation>
+        <soundspeed>1527.2</soundspeed>
+        <frequency>720k</frequency>
+    </sonar>
+    <file>
+        <folder>UATD_Test_2</folder>
+        <filename>00069</filename>
+    </file>
+    <size>
+        <width>512</width>
+        <height>1776</height>
+        <channel>3</channel>
+    </size>
+    </annotation>
