@@ -94,7 +94,6 @@ export default function ThreeDMapPage({ detections = [], shipLatitude, shipLongi
       ? detection
       : highest;
   }, null);
-  const primaryDetections = primaryDetection ? [primaryDetection] : [];
   const anchorX = primaryDetection ? Number(primaryDetection.local_x) : 0;
   const anchorZ = primaryDetection ? -Number(primaryDetection.local_z) : 0;
   const maxDepth = validDetections.reduce((maxValue, detection) => {
@@ -102,8 +101,6 @@ export default function ThreeDMapPage({ detections = [], shipLatitude, shipLongi
     return Number.isFinite(depth) ? Math.max(maxValue, depth) : maxValue;
   }, 40);
   const seabedDepth = Number.isFinite(maxDepth) ? maxDepth : 40;
-  const seabedThickness = Math.max(300, seabedDepth * 3 + 120);
-  const seabedY = -(seabedDepth + seabedThickness / 2);
   const rovY = -Math.max(2, seabedDepth * 0.5);
   const rovPosition = [-30, rovY, 0];
 
@@ -127,10 +124,6 @@ export default function ThreeDMapPage({ detections = [], shipLatitude, shipLongi
       : selectedSidebarItem
         ? { detection: selectedSidebarItem.detection, geoInfo: selectedSidebarItem.geoInfo }
         : null;
-
-  const activeSelectedItem = activeSelectedObject
-    ? objectSidebarItems.find((item) => item.detection === activeSelectedObject.detection) || null
-    : null;
 
   React.useEffect(() => {
     if (!objectSidebarItems.length) {
