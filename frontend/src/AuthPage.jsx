@@ -84,6 +84,7 @@ export default function AuthPage({ onAuthenticated }) {
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               placeholder="Enter username or email"
+              autoComplete="username"
               required
             />
           </div>
@@ -97,6 +98,7 @@ export default function AuthPage({ onAuthenticated }) {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter password"
+                autoComplete={showPassword ? "off" : "current-password"}
                 required
               />
               <button
