@@ -19,7 +19,7 @@ const roles = [
   },
 ];
 
-export default function RoleSelectionPage({ onRoleSelect }) {
+export default function RoleSelectionPage({ onRoleSelect, roleError = "" }) {
   return (
     <main className="role-selection-page">
       <section className="role-selection-panel" aria-labelledby="role-selection-title">
@@ -28,6 +28,7 @@ export default function RoleSelectionPage({ onRoleSelect }) {
         <p className="role-selection-intro">
           Choose your authorized role to access workspace tools and telemetry.
         </p>
+        {roleError && <p className="role-selection-error">{roleError}</p>}
         <div className="role-grid">
           {roles.map((role) => (
             <button
