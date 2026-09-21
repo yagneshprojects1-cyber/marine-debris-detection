@@ -7,7 +7,7 @@ import { AI_API_BASE_URL } from '../config/api';
  * Map detection object names to 3D model file paths
  * These files are served by the FastAPI backend from backend/3dmodels.
  */
-const MODEL_BASE_URL = AI_API_BASE_URL.replace(/\/$/, '');
+const MODEL_BASE_URL = (AI_API_BASE_URL || '').replace(/\/$/, '');
 // Bump this value whenever a GLB is replaced so Drei/browser caches fetch the new asset.
 const MODEL_ASSET_VERSION = '20260910-detection-models-v2';
 const modelUrl = (filename) => `${MODEL_BASE_URL}/3dmodels/${encodeURIComponent(filename)}?v=${MODEL_ASSET_VERSION}`;
