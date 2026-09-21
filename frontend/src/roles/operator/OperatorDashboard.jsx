@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "./OperatorDashboard.css";
 import MapPage from "../../pages/MapPage";
 import RouteOptimizationPage from "../../pages/RouteOptimizationPage";
@@ -17,7 +17,7 @@ export default function OperatorDashboard({ activeTab = "my-tasks", username }) 
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`${API_BASE_URL}/api/operator/tasks?username=${encodeURIComponent(username || "")}`);
@@ -30,11 +30,11 @@ export default function OperatorDashboard({ activeTab = "my-tasks", username }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [username]);
 
   useEffect(() => {
     fetchTasks();
-  }, [username]);
+  }, [fetchTasks]);
 
   const handleConfirmRemoval = async (task) => {
     try {

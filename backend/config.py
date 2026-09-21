@@ -5,13 +5,26 @@ Every path and tunable value used by the application lives here so that
 routers and services never hard-code locations or magic numbers.
 """
 
+import os
 import random
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+_ENV_CANDIDATES = [
+    Path(__file__).resolve().parent / ".env",
+    Path(__file__).resolve().parent / "env",
+]
+
+for env_path in _ENV_CANDIDATES:
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
+
 # ── Application ───────────────────────────────────────────────────────────────
 APP_NAME = "Debris Detector API"
-API_HOST = "127.0.0.1"
-API_PORT = 8000
+API_HOST = os.getenv("HOST", "127.0.0.1")
+API_PORT = int(os.getenv("PORT", "8000"))
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # ── Directories ───────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent          # .../backend
