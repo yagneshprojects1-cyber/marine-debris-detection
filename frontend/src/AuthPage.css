@@ -39,6 +39,31 @@
   line-height: 1.5;
 }
 
+.demo-access {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 20px;
+  color: #b8ccdb;
+  font-size: 0.82rem;
+}
+
+.demo-access button {
+  border: 1px solid rgba(126, 228, 255, 0.4);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: transparent;
+  color: #7ee4ff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.demo-access button:hover,
+.demo-access button:focus-visible {
+  background: rgba(126, 228, 255, 0.12);
+}
+
 .auth-form {
   display: grid;
   gap: 16px;

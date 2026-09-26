@@ -6,7 +6,6 @@ import RoleLandingPage from './roles/RoleLandingPage';
 import ManagerDashboard from './roles/manager/ManagerDashboard';
 import OperatorDashboard from './roles/operator/OperatorDashboard';
 import SystemAdminWorkspace from './roles/system-admin/SystemAdminWorkspace';
-import RoleSelectionPage from './roles/RoleSelectionPage';
 import AuthPage from './AuthPage';
 import { API_BASE_URL, AI_API_BASE_URL } from './config/api';
 
@@ -21,31 +20,13 @@ function App() {
       return null;
     }
   });
-  const [selectedWorkspaceRole, setSelectedWorkspaceRole] = useState(() => {
-    const savedRole = localStorage.getItem('marine_debris_selected_role');
-    return savedRole || null;
-  });
-  const [roleSelectionError, setRoleSelectionError] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [databaseDetections, setDatabaseDetections] = useState([]);
   const [detectionResult, setDetectionResult] = useState(null);
   const [showAnalysisToast, setShowAnalysisToast] = useState(false);
 
-  const selectedRole = selectedWorkspaceRole || null;
-
-  const handleRoleSelect = (roleName) => {
-    if (!user) return;
-
-    if (roleName !== user.role) {
-      setRoleSelectionError("please select your appropriate role");
-      return;
-    }
-
-    setSelectedWorkspaceRole(roleName);
-    localStorage.setItem('marine_debris_selected_role', roleName);
-    setRoleSelectionError("");
-    setActiveTab(roleName === "Marine Debris Removal Operator" ? "my-tasks" : "dashboard");
-  };
+  // The role comes from the signed-in account and is never selected in the UI.
+  const selectedRole = user?.role || null;
 
   const loadMapData = () => {
     return fetch(`${API_BASE_URL}/api/map-data`)
@@ -109,15 +90,8 @@ function App() {
 
   const handleAuthenticated = (sessionUser) => {
     setUser(sessionUser);
-    setRoleSelectionError("");
-
-    const savedSelectedRole = localStorage.getItem('marine_debris_selected_role');
-    if (savedSelectedRole === sessionUser.role) {
-      setSelectedWorkspaceRole(savedSelectedRole);
-    } else {
-      setSelectedWorkspaceRole(null);
-      localStorage.removeItem('marine_debris_selected_role');
-    }
+    // Discard the selection used by previous versions of the application.
+    localStorage.removeItem('marine_debris_selected_role');
 
     if (sessionUser.role === "Marine Debris Removal Operator") {
       setActiveTab("my-tasks");
@@ -131,18 +105,12 @@ function App() {
     localStorage.removeItem('marine_debris_user');
     localStorage.removeItem('marine_debris_selected_role');
     setUser(null);
-    setSelectedWorkspaceRole(null);
-    setRoleSelectionError("");
     setDetectionResult(null);
     setActiveTab("dashboard");
   };
 
   if (!user) {
     return <AuthPage onAuthenticated={handleAuthenticated} />;
-  }
-
-  if (!selectedRole) {
-    return <RoleSelectionPage onRoleSelect={handleRoleSelect} roleError={roleSelectionError} />;
   }
 
   const isSonarAnalyst = selectedRole === "Sonar Analyst";

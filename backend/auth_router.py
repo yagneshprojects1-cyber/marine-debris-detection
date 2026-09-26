@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import re
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -24,6 +25,10 @@ DEFAULT_AUTH_USERS = {
         "role": "System Administrator",
     },
 }
+DEFAULT_AUTH_ALIASES = {
+    username.split("@", maxsplit=1)[0]: username
+    for username in DEFAULT_AUTH_USERS
+}
 
 
 def _local_seed_default_users() -> None:
@@ -42,6 +47,10 @@ def _local_seed_default_users() -> None:
 
 def seed_default_users() -> None:
     """Create the required default management accounts if they do not already exist."""
+    # Keep a usable local copy even when a configured database has an old or
+    # partially-created default account.  This also makes local development
+    # independent of MongoDB availability.
+    _local_seed_default_users()
     timestamp = datetime.now(timezone.utc).isoformat()
     try:
         users = _user_collection()
@@ -104,10 +113,14 @@ def _user_collection():
 def _find_user(identifier: str):
     """Find an account using either the login username or the admin-entered email."""
     users = _user_collection()
+    # Email addresses are case-insensitive.  The old exact-match lookup made
+    # a valid account fail with a 401 when, for example, a browser autofill
+    # capitalised the first letter of an email address.
+    exact_identifier = {"$regex": f"^{re.escape(identifier)}$", "$options": "i"}
     return users.find_one({
         "$or": [
-            {"username": identifier},
-            {"email": identifier},
+            {"username": exact_identifier},
+            {"email": exact_identifier},
         ],
     })
 
@@ -120,15 +133,25 @@ def _get_account_created_at(user: dict[str, Any]) -> str:
     return str(value or "")
 
 
+def _get_local_user(identifier: str) -> dict[str, Any] | None:
+    """Resolve an email or the short name of a seeded development account."""
+    return LOCAL_USER_STORE.get(identifier) or LOCAL_USER_STORE.get(
+        DEFAULT_AUTH_ALIASES.get(identifier, "")
+    )
+
+
 @router.post("/login", response_model=AuthResponse)
 def login(payload: LoginRequest):
-    username = payload.username.strip()
+    username = payload.username.strip().casefold()
     try:
         user = _find_user(username)
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid username or password.")
+        if not user or not user.get("password_hash"):
+            # A MongoDB collection can predate authentication and therefore
+            # omit the seeded accounts' password hashes.  Use the local seed
+            # for those two documented development accounts in that case.
+            user = _get_local_user(username)
 
-        if not verify_password(payload.password, user.get("password_hash", "")):
+        if not user or not verify_password(payload.password, user.get("password_hash", "")):
             raise HTTPException(status_code=401, detail="Invalid username or password.")
 
         role = user.get("role") or DEFAULT_ROLE
@@ -147,7 +170,7 @@ def login(payload: LoginRequest):
     except HTTPException:
         raise
     except Exception:
-        user = LOCAL_USER_STORE.get(username)
+        user = _get_local_user(username)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid username or password.")
         if not verify_password(payload.password, user.get("password_hash", "")):

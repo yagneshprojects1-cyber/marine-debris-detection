@@ -11,6 +11,12 @@ export default function AuthPage({ onAuthenticated }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const useDemoAccount = (demoUsername, demoPassword) => {
+    setUsername(demoUsername);
+    setPassword(demoPassword);
+    setError("");
+  };
+
   const submitAuth = async (event) => {
     event.preventDefault();
     setError("");
@@ -74,6 +80,16 @@ export default function AuthPage({ onAuthenticated }) {
         <p className="auth-subtitle">
           Login to access your role-based marine debris workspace.
         </p>
+
+        <div className="demo-access" aria-label="Development account shortcuts">
+          <span>Development access:</span>
+          <button type="button" onClick={() => useDemoAccount("admin@gmail.com", "admin123")}>
+            Use administrator account
+          </button>
+          <button type="button" onClick={() => useDemoAccount("manager@gmail.com", "manager123")}>
+            Use manager account
+          </button>
+        </div>
 
         <form className="auth-form" onSubmit={submitAuth}>
           <div className="auth-field">
